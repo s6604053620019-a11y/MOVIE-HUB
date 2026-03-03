@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.username }}'s Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #14181c; 
+            color: #fff; 
+            font-family: sans-serif; 
+        }
+        .poster-sm { 
+            width: 100%; 
+            border-radius: 4px; 
+            transition: transform 0.2s; 
+            border: 1px solid #456; 
+        }
+        .poster-sm:hover { 
+            transform: scale(1.05); 
+            cursor: pointer; 
+        }
+        .nav-header { 
+            background-color: #2c3440; 
+            border-bottom: 1px solid #456; 
+        }
+        a { 
+            text-decoration: none; 
+            color: inherit; 
+        }
+        /* ตกแต่งปุ่มอัปโหลดรูปให้ดูเนียนตา */
+        .avatar-upload-form input[type="file"] {
+            font-size: 0.8rem;
+            color: #9ab;
+        }
+        .avatar-upload-form input[type="file"]::file-selector-button {
+            background-color: #2c3440;
+            color: #fff;
+            border: 1px solid #456;
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .avatar-upload-form input[type="file"]::file-selector-button:hover {
+            background-color: #456;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark nav-header mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'home' %}">🎥 CineShare</a>
+            <form action="{% url 'logout' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger btn-sm">Log Out</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <div class="d-flex align-items-center mb-5 border-bottom border-secondary pb-4">
+            <div class="me-4 position-relative">
+                {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" alt="Avatar" class="rounded-circle object-fit-cover" style="width: 100px; height: 100px; border: 2px solid #00e054;">
+                {% else %}
+                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 100px; height: 100px; font-size: 2.5rem; border: 2px solid #445566;">
+                        {{ user.username|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+            </div> <div class="flex-grow-1">
+                <h1 class="fw-bold mb-0">{{ user.username }}</h1>
+                <p class="text-muted mb-2">Member since {{ user.date_joined|date:"M Y" }}</p>
+                
+                <form method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2 avatar-upload-form" style="max-width: 400px;">
+                    {% csrf_token %}
+                    {{ form.avatar }}
+                    <button type="submit" class="btn btn-outline-success btn-sm fw-bold">Upload</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            
+            <div class="col-md-6 mb-4">
+                <h4 class="text-success border-bottom border-secondary pb-2 mb-3">❤️ Favorite Movies</h4>
+                <div class="row row-cols-3 row-cols-md-4 g-3">
+                    {% for movie in favorite_movies %}
+                        <div class="col">
+                            <a href="{% url 'movie_detail' movie.id %}">
+                                <img src="{{ movie.poster_url }}" class="poster-sm" alt="{{ movie.title }}">
+                            </a>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">No favorites yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <h4 class="text-info border-bottom border-secondary pb-2 mb-3 mt-md-0 mt-5">🕰️ Watchlist</h4>
+                <div class="row row-cols-3 row-cols-md-4 g-3">
+                    {% for movie in watchlist_movies %}
+                        <div class="col">
+                            <a href="{% url 'movie_detail' movie.id %}">
+                                <img src="{{ movie.poster_url }}" class="poster-sm" alt="{{ movie.title }}">
+                            </a>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">Your watchlist is empty.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <h4 class="text-warning border-bottom border-secondary pb-2 mb-3">📝 My Diary</h4>
+                <div class="list-group">
+                    {% for review in my_reviews %}
+                        <a href="{% url 'movie_detail' review.movie.id %}" class="list-group-item list-group-item-action bg-dark text-white border-secondary mb-2">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 text-warning">{{ review.movie.title }}</h6>
+                                <small class="text-muted">
+                                    {% with ''|center:review.rating as range %}
+                                        {% for _ in range %}★{% endfor %}
+                                    {% endwith %}
+                                </small>
+                            </div>
+                            <small class="text-secondary">{{ review.created_at|date:"d M Y" }}</small>
+                            <p class="mb-1 mt-2 small text-light">{{ review.text|truncatechars:100 }}</p>
+                        </a>
+                    {% empty %}
+                        <p class="text-muted">No reviews yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div> </div> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
