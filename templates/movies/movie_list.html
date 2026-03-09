@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}CineShare - Discovery{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-wrapper mb-5 animate-up">
+    <div class="container">
+        {% if movies %}
+        {% with hero=movies|first %}
+        <div class="hero-banner position-relative shadow-pro">
+            <div class="hero-content p-4 p-md-5 d-flex flex-column justify-content-end h-100 position-relative z-1">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-trending text-uppercase">#1 Trending</span>
+                </div>
+                <h1 class="display-3 fw-black text-white mb-3 text-gradient text-shadow-lg">{{ hero.title }}</h1>
+                <p class="hero-desc text-white mb-4 d-none d-md-block mw-50 text-shadow-sm"
+                    style="font-weight: 500; opacity: 0.9;">
+                    {{ hero.overview|default:"Discover the latest cinematic masterpiece on CineShare."|truncatechars:180
+                    }}
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'movie_detail' hero.id %}" class="btn btn-brand d-flex align-items-center gap-2">
+                        <i class="bi bi-play-fill fs-5"></i> View Details
+                    </a>
+                    <button class="btn btn-glass d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-lg"></i> Watchlist
+                    </button>
+                </div>
+            </div>
+            <div class="hero-img-bg position-absolute inset-0"
+                style="background: linear-gradient(to right, var(--bg-main) 10%, rgba(12,14,18,0.4) 60%, transparent 95%), 
+                                        linear-gradient(to top, var(--bg-main) 5%, rgba(12,14,18,0.2) 30%, transparent 60%),
+                                        url('https://image.tmdb.org/t/p/original{{ hero.backdrop_path }}') center 20% / cover no-repeat;">
+            </div>
+        </div>
+        {% endwith %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+        <h2 class="section-title mb-0">
+            {% if query %}Search results for "{{ query }}"{% else %}Popular this week{% endif %}
+        </h2>
+        {% if not query %}
+        <div class="d-flex gap-2 d-none d-md-flex">
+            <button class="btn btn-glass py-1 px-3 small border-0 opacity-50">Filter</button>
+            <button class="btn btn-glass py-1 px-3 small border-0 text-brand">All</button>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3 g-md-4">
+        {% for movie in movies %}
+        <div class="col animate-up">
+            <a href="{% url 'movie_detail' movie.id %}" class="text-decoration-none d-block">
+                <div class="movie-card mb-3 shadow-pro">
+                    <img src="{{ movie.poster_url }}" class="poster-img" alt="{{ movie.title }}" loading="lazy">
+                    <div class="card-overlay position-absolute inset-0 d-flex align-items-center justify-content-center opacity-0 transition-smooth"
+                        style="background: rgba(0,0,0,0.6);">
+                        <div class="btn btn-glass rounded-circle p-3">
+                            <i class="bi bi-eye-fill fs-4 text-white"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-1 text-center text-md-start">
+                    <div class="fw-bold text-white text-truncate mb-1 hover-glow transition-fast"
+                        style="font-size: 0.95rem;">{{ movie.title }}</div>
+                    <div
+                        class="d-flex align-items-center justify-content-center justify-content-md-start gap-2 text-muted small">
+                        <span>{{ movie.release_year }}</span>
+                        <span class="opacity-25 lh-1">•</span>
+                        <span class="text-brand fw-bold">Movie</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-camera-reels display-1 text-dim opacity-25"></i>
+            </div>
+            <h3 class="text-white-50">No films found</h3>
+            <p class="text-muted">We couldn't find anything matching your search. Try broaden your keywords.</p>
+            <a href="{% url 'home' %}" class="btn btn-brand mt-3">Back to Popular</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .mw-50 {
+        max-width: 600px;
+    }
+
+    .inset-0 {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+
+    .card-overlay:hover {
+        opacity: 1 !important;
+    }
+
+    .movie-card:hover .card-overlay {
+        opacity: 1;
+    }
+</style>
+{% endblock %}

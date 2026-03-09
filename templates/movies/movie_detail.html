@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ movie.title }} ({{ movie.release_year }}) - CineShare{% endblock %}
+
+{% block content %}
+<div class="movie-backdrop position-fixed w-100 top-0 start-0 z-n1"
+    style="background-image: url('{{ movie.backdrop_url }}'); height: 100vh;"></div>
+
+<div class="container container-detail mt-5 pt-lg-5 animate-up">
+    <div class="row g-5">
+        <!-- Poster & Quick Stats -->
+        <div class="col-lg-4 col-xl-3">
+            <div class="movie-card shadow-pro mb-4">
+                <img src="{{ movie.poster_url }}" class="poster-img w-100" alt="{{ movie.title }}">
+            </div>
+
+            <div class="d-grid gap-3 mb-5">
+                {% if user.is_authenticated %}
+                <button id="likeBtn" class="btn btn-detail-action {% if user_liked %}liked{% endif %}"
+                    onclick="toggleAction('like')">
+                    <i class="bi bi-heart{% if user_liked %}-fill{% endif %} me-2"></i>
+                    <span class="btn-text">{% if user_liked %}Liked{% else %}Like{% endif %}</span>
+                </button>
+                <button id="watchlistBtn" class="btn btn-detail-action {% if in_watchlist %}active{% endif %}"
+                    onclick="toggleAction('watchlist')">
+                    <i class="bi bi-bookmark{% if in_watchlist %}-check-fill{% endif %} me-2"></i>
+                    <span class="btn-text">{% if in_watchlist %}In Watchlist{% else %}Watchlist{% endif %}</span>
+                </button>
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-glass text-center w-100">Sign in to
+                    Rate</a>
+                {% endif %}
+            </div>
+
+            <div class="metadata-grid bg-card-glass p-4 rounded-4 d-none d-lg-block">
+                <h6 class="text-white-50 fw-bold small mb-4 tracking-wider">INFORMATION</h6>
+                <div class="mb-3">
+                    <label class="d-block text-muted small">Release Date</label>
+                    <span class="text-white fw-semibold">{{ movie.release_year }}</span>
+                </div>
+                <div class="mb-3">
+                    <label class="d-block text-muted small">Director</label>
+                    <span class="text-white fw-semibold">{{ movie.director }}</span>
+                </div>
+                <div class="mb-3">
+                    <label class="d-block text-muted small">Runtime</label>
+                    <span class="text-white fw-semibold">{{ movie.runtime }} minutes</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details & Main Content -->
+        <div class="col-lg-8 col-xl-9 ps-lg-5">
+            <header class="mb-5">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}"
+                                class="text-muted text-decoration-none">Discovery</a></li>
+                        <li class="breadcrumb-item active text-white-50" aria-current="page">Movie</li>
+                    </ol>
+                </nav>
+                <h1 class="display-2 fw-black text-white mb-2 text-gradient text-shadow-lg">{{ movie.title }}</h1>
+                <div class="d-flex align-items-center gap-3 text-muted">
+                    <span class="h5 mb-0 text-white-50">{{ movie.release_year }}</span>
+                    <span class="opacity-25 fs-4">•</span>
+                    <span class="badge btn-glass border-0 fw-normal">Directed by {{ movie.director }}</span>
+                    {% if movie.genres %}
+                    <span class="opacity-25 fs-4">•</span>
+                    <div class="gap-2 d-flex">
+                        {% for genre in movie.genres %}
+                        <span class="small text-brand fw-bold">{{ genre }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </header>
+
+            <section class="mb-5">
+                <div class="rating-summary bg-card-glass p-4 rounded-4 mb-4 border border-subtle shadow-pro">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="text-white-50 fw-bold small tracking-wider mb-0">RATINGS</h6>
+                        <span class="text-white-50 small fw-bold tracking-wider">{{ db_movie.rating_count }} FANS</span>
+                    </div>
+                    <hr class="border-secondary opacity-25 mt-2 mb-4">
+
+                    <div class="d-flex align-items-end gap-3 gap-md-5">
+                        <!-- Histogram -->
+                        <div class="d-flex align-items-center gap-2 flex-grow-1">
+                            <i class="bi bi-star-fill text-brand-green small"></i>
+                            <div class="rating-histogram d-flex align-items-end gap-1 flex-grow-1"
+                                style="height: 60px;">
+                                {% for rating, data in db_movie.rating_distribution.items %}
+                                <div class="his-bar rounded-top-1"
+                                    style="height: calc({{ data.percent }}% + 2px); width: 100%; min-width: 8px;"
+                                    title="{{ rating }} stars: {{ data.count }}"></div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Average & Stars -->
+                        <div class="text-end">
+                            <div class="display-4 fw-black text-white mb-0 lh-1">{{ db_movie.average_rating }}</div>
+                            <div class="text-brand-green fs-5 mt-1 d-flex gap-1 justify-content-end">
+                                {% with avg=db_movie.average_rating %}
+                                <i class="bi bi-star{% if avg >= 1 %}-fill{% elif avg >= 0.5 %}-half{% endif %}"></i>
+                                <i class="bi bi-star{% if avg >= 2 %}-fill{% elif avg >= 1.5 %}-half{% endif %}"></i>
+                                <i class="bi bi-star{% if avg >= 3 %}-fill{% elif avg >= 2.5 %}-half{% endif %}"></i>
+                                <i class="bi bi-star{% if avg >= 4 %}-fill{% elif avg >= 3.5 %}-half{% endif %}"></i>
+                                <i class="bi bi-star{% if avg >= 5 %}-fill{% elif avg >= 4.5 %}-half{% endif %}"></i>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="section-title">Synopsis</h2>
+                <p class="lead text-white mb-4 lh-lg text-shadow-sm"
+                    style="font-size: 1.15rem; font-weight: 500; opacity: 0.95;">{{ movie.description }}</p>
+            </section>
+
+            {% if movie.trailer_key %}
+            <section class="mb-5">
+                <h2 class="section-title">Trailer</h2>
+                <div class="ratio ratio-16x9 rounded-4 shadow-pro overflow-hidden border border-subtle">
+                    <iframe src="https://www.youtube.com/embed/{{ movie.trailer_key }}?rel=0&modestbranding=1"
+                        title="Trailer" allowfullscreen></iframe>
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Cast -->
+            <section class="mb-5">
+                <h2 class="section-title">Cast Members</h2>
+                <div class="d-flex overflow-auto pb-4 gap-4 no-scrollbar">
+                    {% for person in movie.cast %}
+                    <div class="cast-card text-center" style="min-width: 130px;">
+                        <a href="https://www.imdb.com/find?q={{ person.name|urlencode }}" target="_blank"
+                            class="text-decoration-none group">
+                            <div class="avatar-container mb-3 position-relative">
+                                {% if person.profile_url %}
+                                <img src="{{ person.profile_url }}"
+                                    class="rounded-circle shadow-pro cast-avatar border border-subtle"
+                                    style="width: 100px; height: 100px; object-fit: cover;">
+                                {% else %}
+                                <div class="rounded-circle bg-dark border border-subtle d-flex align-items-center justify-content-center mx-auto shadow-pro"
+                                    style="width: 100px; height: 100px;">
+                                    <span class="text-white fs-2">{{ person.name|slice:":1" }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="avatar-glow"></div>
+                            </div>
+                            <div class="fw-bold text-white text-truncate hover-glow transition-fast">{{ person.name }}
+                            </div>
+                        </a>
+                        <div class="small text-muted text-truncate">{{ person.character }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- Reviews -->
+            <section class="py-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="section-title mb-0">Member Reviews</h2>
+                    {% if reviews %}
+                    <span class="badge btn-glass border-0">{{ reviews|length }} Reviews</span>
+                    {% endif %}
+                </div>
+
+                {% if user.is_authenticated %}
+                <div class="bg-card-glass p-4 rounded-4 mb-5 border border-subtle shadow-pro animate-up">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-4">
+                            <div class="col-md-4 col-xl-3">
+                                <label class="form-label text-white-50 small fw-bold tracking-wider">YOUR RATING</label>
+                                <div class="star-rating-interactive mt-2">
+                                    {% for i in "54321"|make_list %}
+                                    <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" {% if form.rating.value|slugify == i %}checked{% endif %}>
+                                    <label for="star{{ i }}" title="{{ i }} stars">
+                                        <i class="bi bi-star-fill"></i>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                                <div class="d-none">
+                                    {{ form.rating }}
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-white-50 small fw-bold tracking-wider">YOUR
+                                    THOUGHTS</label>
+                                {{ form.text }}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-brand mt-4 px-5 fw-bold">POST REVIEW</button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <div class="review-list">
+                    {% for review in reviews %}
+                    <div
+                        class="review-item bg-card-glass p-4 p-md-5 rounded-4 border border-subtle mb-4 shadow-pro transition-smooth hover-glow-border">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-brand-blue-glass rounded-circle p-1">
+                                    <div class="bg-brand-blue rounded-circle d-flex align-items-center justify-content-center text-dark fw-black"
+                                        style="width: 45px; height: 45px;">
+                                        {{ review.user.username|slice:":1"|upper }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-white fw-bold h5 mb-0">{{ review.user.username }}</div>
+                                    <div class="text-muted small">{{ review.created_at|date:"F d, Y" }}</div>
+                                </div>
+                            </div>
+                            <div
+                                class="rating-badge bg-brand-green-glass px-3 py-1 rounded-pill text-brand-green fw-bold">
+                                {{ review.rating }} <small class="opacity-50 fs-6">★</small>
+                            </div>
+                        </div>
+                        <p class="text-white-50 lh-lg fs-5 mb-0 font-italic">"{{ review.text }}"</p>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5 bg-card-glass rounded-4 border border-dashed border-subtle">
+                        <i class="bi bi-chat-dots display-4 text-muted opacity-25 mb-3 d-block"></i>
+                        <p class="text-muted fs-5">No reviews yet. Share your cinematic experience first!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if movie.recommendations %}
+                <div class="mt-5 pt-4">
+                    <h2 class="section-title">Similar Discovery</h2>
+                    <div class="row row-cols-3 row-cols-md-4 row-cols-lg-6 g-3">
+                        {% for rec in movie.recommendations %}
+                        <div class="col">
+                            <a href="{% url 'movie_detail' rec.id %}" class="movie-card d-block shadow-pro border-0">
+                                <img src="{{ rec.poster_url }}" class="poster-img" alt="{{ rec.title }}">
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+</div>
+
+<style>
+    .movie-backdrop::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(8, 10, 12, 0.7) 0%, rgba(8, 10, 12, 0.4) 40%, var(--bg-main) 90%);
+    }
+
+    .bg-card-glass {
+        background: rgba(22, 27, 34, 0.4);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .rating-histogram {
+        padding-bottom: 2px;
+    }
+
+    .his-bar {
+        background: rgba(64, 188, 244, 0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(64, 188, 244, 0.1);
+    }
+
+    .his-bar:hover {
+        background: var(--brand-blue);
+        box-shadow: 0 0 15px rgba(64, 188, 244, 0.4);
+        transform: scaleX(1.1);
+    }
+
+    .text-brand-green {
+        color: var(--brand-green);
+    }
+
+    .lh-1 {
+        line-height: 1;
+    }
+
+    .btn-detail-action {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-muted);
+        padding: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        transition: var(--transition-fast);
+        border-radius: 12px;
+    }
+
+    .btn-detail-action:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-bright);
+        transform: translateY(-2px);
+    }
+
+    .btn-detail-action.liked {
+        color: #ff4757;
+        background: rgba(255, 71, 87, 0.1);
+        border-color: #ff4757;
+    }
+
+    .btn-detail-action.active {
+        color: var(--brand-blue);
+        background: rgba(64, 188, 244, 0.1);
+        border-color: var(--brand-blue);
+    }
+
+    .bg-brand-blue-glass {
+        background: rgba(64, 188, 244, 0.1);
+    }
+
+    .bg-brand-green-glass {
+        background: rgba(0, 224, 84, 0.1);
+    }
+
+    .text-brand-green {
+        color: var(--brand-green);
+    }
+
+    .hover-glow-border:hover {
+        border-color: var(--brand-blue) !important;
+        box-shadow: 0 0 20px rgba(64, 188, 244, 0.1) !important;
+    }
+
+    .avatar-glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, var(--brand-orange) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: -1;
+        filter: blur(10px);
+    }
+
+    .cast-card:hover .avatar-glow {
+        opacity: 0.3;
+    }
+
+    .form-control {
+        background: rgba(8, 10, 12, 0.6) !important;
+        border-radius: 12px !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function toggleAction(type) {
+        const btn = type === 'like' ? document.getElementById('likeBtn') : document.getElementById('watchlistBtn');
+        const textSpan = btn.querySelector('.btn-text');
+        const icon = btn.querySelector('i');
+        const originalHtml = btn.innerHTML;
+
+        btn.disabled = true;
+
+        const url = type === 'like' ? "{% url 'toggle_like' movie.id %}" : "{% url 'toggle_watchlist' movie.id %}";
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = "{% url 'login' %}?next={{ request.path }}";
+                return;
+            }
+
+            const data = await response.json();
+
+            if (type === 'like') {
+                btn.classList.toggle('liked', data.liked);
+                icon.className = data.liked ? 'bi bi-heart-fill me-2' : 'bi bi-heart me-2';
+                textSpan.innerText = data.liked ? 'Liked' : 'Like';
+            } else {
+                btn.classList.toggle('active', data.added);
+                icon.className = data.added ? 'bi bi-bookmark-check-fill me-2' : 'bi bi-bookmark me-2';
+                textSpan.innerText = data.added ? 'In Watchlist' : 'Watchlist';
+            }
+        } catch (error) {
+            console.error('Error toggling action:', error);
+            btn.innerHTML = originalHtml;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

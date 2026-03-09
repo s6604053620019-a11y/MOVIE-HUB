@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile.user.username }}'s Profile - CineShare{% endblock %}
+
+{% block content %}
+<div class="container py-4 mt-lg-4 animate-up">
+    <!-- Profile Header -->
+    <div class="row align-items-center mb-5 pb-5 border-bottom border-subtle">
+        <div class="col-auto">
+            <div class="position-relative">
+                {% if profile.avatar %}
+                <img src="{{ profile.avatar.url }}" alt="Avatar" class="rounded-circle shadow-pro"
+                    style="width: 140px; height: 140px; border: 4px solid var(--brand-green); object-fit: cover;">
+                {% else %}
+                <div class="rounded-circle bg-card border-subtle d-flex align-items-center justify-content-center text-white fw-bold shadow-pro"
+                    style="width: 140px; height: 140px; border: 4px solid var(--border-highlight); font-size: 3.5rem;">
+                    {{ user.username|slice:":1"|upper }}
+                </div>
+                {% endif %}
+                <div class="position-absolute bottom-0 end-0">
+                    <button class="btn btn-brand rounded-circle p-2 shadow-pro" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#editProfile">
+                        <i class="bi bi-pencil-fill small"></i>
+                    </button>
+                </div>
+                <div class="avatar-glow-profile"></div>
+            </div>
+        </div>
+        <div class="col ps-md-4">
+            <h1 class="display-3 fw-black text-white mb-1 text-shadow-lg">{{ user.username }}</h1>
+            <p class="text-muted mb-4 d-flex align-items-center gap-2">
+                <i class="bi bi-calendar3"></i> Member since {{ user.date_joined|date:"F Y" }}
+            </p>
+
+            <div class="collapse mt-4" id="editProfile">
+                <div class="auth-card p-4" style="max-width: 500px;">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small fw-bold tracking-wider">BIO</label>
+                            {{ form.bio }}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small fw-bold tracking-wider">AVATAR</label>
+                            {{ form.avatar }}
+                        </div>
+                        <button type="submit" class="btn btn-brand w-100 fw-bold py-2">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-5">
+        <!-- Favorites & Watchlist -->
+        <div class="col-lg-8">
+            <div class="mb-5">
+                <h2 class="section-title">Favorite Masterpieces</h2>
+                <div class="row row-cols-3 row-cols-md-4 row-cols-lg-5 g-3">
+                    {% for movie in favorite_movies %}
+                    <div class="col" id="fav-{{ movie.tmdb_id }}">
+                        <div class="movie-card position-relative shadow-pro">
+                            <a href="{% url 'movie_detail' movie.tmdb_id %}">
+                                <img src="https://image.tmdb.org/t/p/w342{{ movie.poster_path }}" class="poster-img"
+                                    alt="{{ movie.title }}">
+                            </a>
+                            <button onclick="removeFromList('{{ movie.tmdb_id }}', 'like')"
+                                class="btn-remove btn btn-glass rounded-circle p-1 position-absolute top-0 end-0 m-2 opacity-0 transition-fast"
+                                title="Remove">
+                                <i class="bi bi-x fs-5 text-danger"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-4 bg-card-glass rounded-4 border border-dashed border-subtle">
+                        <p class="text-muted mb-0 small">No favorites discovered yet.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <h2 class="section-title text-brand-blue">Watchlist</h2>
+                <div class="row row-cols-3 row-cols-md-4 row-cols-lg-5 g-3">
+                    {% for movie in watchlist_movies %}
+                    <div class="col" id="watch-{{ movie.tmdb_id }}">
+                        <div class="movie-card position-relative shadow-pro">
+                            <a href="{% url 'movie_detail' movie.tmdb_id %}">
+                                <img src="https://image.tmdb.org/t/p/w342{{ movie.poster_path }}" class="poster-img"
+                                    alt="{{ movie.title }}">
+                            </a>
+                            <button onclick="removeFromList('{{ movie.tmdb_id }}', 'watchlist')"
+                                class="btn-remove btn btn-glass rounded-circle p-1 position-absolute top-0 end-0 m-2 opacity-0 transition-fast"
+                                title="Remove">
+                                <i class="bi bi-x fs-5 text-danger"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-4 bg-card-glass rounded-4 border border-dashed border-subtle">
+                        <p class="text-muted mb-0 small">Your watchlist is awaiting discovery.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- My Reviews -->
+        <div class="col-lg-4">
+            <h2 class="section-title text-orange">Cinematic Diary</h2>
+            <div class="review-list">
+                {% for review in my_reviews %}
+                <div
+                    class="bg-card-glass border border-subtle mb-4 p-4 rounded-4 shadow-pro transition-smooth hover-glow-border">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <a href="{% url 'movie_detail' review.movie.tmdb_id %}"
+                            class="text-white text-decoration-none fw-bold h6 mb-0 hover-glow">{{ review.movie.title
+                            }}</a>
+                        <div
+                            class="rating-badge bg-brand-green-glass px-2 py-0 border-0 rounded text-brand-green small fw-bold">
+                            {{ review.rating }} ★
+                        </div>
+                    </div>
+                    <p class="small text-white-50 mb-3 lh-base font-italic border-start border-subtle ps-2">"{{
+                        review.text|truncatechars:120 }}"</p>
+                    <div class="d-flex align-items-center text-dim smallest gap-1">
+                        <i class="bi bi-clock"></i> {{ review.created_at|date:"d M Y" }}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4 bg-card-glass rounded-4 border border-dashed border-subtle">
+                    <p class="text-muted mb-0 small">No entries in your diary yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-card-glass {
+        background: rgba(22, 27, 34, 0.4);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .bg-brand-blue-glass {
+        background: rgba(64, 188, 244, 0.1);
+    }
+
+    .bg-brand-green-glass {
+        background: rgba(0, 224, 84, 0.1);
+    }
+
+    .text-brand-green {
+        color: var(--brand-green);
+    }
+
+    .text-brand-blue {
+        color: var(--brand-blue);
+    }
+
+    .text-orange {
+        color: var(--brand-orange);
+    }
+
+    .smallest {
+        font-size: 0.7rem;
+    }
+
+    .hover-glow-border:hover {
+        border-color: var(--brand-green) !important;
+        box-shadow: 0 0 15px rgba(0, 224, 84, 0.05) !important;
+    }
+
+    .movie-card:hover .btn-remove {
+        opacity: 1 !important;
+    }
+
+    .avatar-glow-profile {
+        position: absolute;
+        inset: -20px;
+        background: radial-gradient(circle, var(--brand-green) 0%, transparent 65%);
+        opacity: 0.1;
+        z-index: -1;
+        filter: blur(20px);
+    }
+</style>
+
+<script>
+    document.querySelectorAll('textarea').forEach(el => el.classList.add('form-control'));
+    document.querySelectorAll('input[type="file"]').forEach(el => el.classList.add('form-control'));
+
+    async function removeFromList(tmdbId, type) {
+        const url = type === 'like' ? `/movies/${tmdbId}/like/` : `/movies/${tmdbId}/watchlist/`;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+
+            // Remove the element from DOM
+            const prefix = type === 'like' ? 'fav-' : 'watch-';
+            const element = document.getElementById(prefix + tmdbId);
+            if (element) {
+                element.style.opacity = '0';
+                element.style.transform = 'scale(0.8)';
+                setTimeout(() => element.remove(), 300);
+            }
+        } catch (error) {
+            console.error('Error removing item:', error);
+        }
+    }
+</script>
+{% endblock %}

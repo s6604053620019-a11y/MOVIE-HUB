@@ -1,66 +1,94 @@
-from django.shortcuts import render, get_object_or_404
-from django.shortcuts import render
-from .models import Movie  # เรียกใช้โมเดลหนังที่เราสร้างไว้
-from django.contrib.auth.decorators import login_required  # ตัวเช็คว่าล็อกอินหรือยัง
-from django.shortcuts import render, get_object_or_404, redirect # เพิ่ม redirect
-from .forms import ReviewForm  # <--- เพิ่มบรรทัดนี้
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from .services import get_popular_movies, search_movies, get_movie_details
+from .models import Movie, Review
+from .forms import ReviewForm
 
 def movie_list(request):
     query = request.GET.get('q')
     if query:
-        # ถ้ามี: ให้หาหนังที่ชื่อมีคำนั้นอยู่ (icontains = ไม่สนตัวพิมพ์เล็ก-ใหญ่)
-        movies = Movie.objects.filter(title__icontains=query)
+        movies = search_movies(query)
     else:
-        # ถ้าไม่มี: ให้ดึงหนังมาทั้งหมดเหมือนเดิม
-        movies = Movie.objects.all()
+        movies = get_popular_movies()
     return render(request, 'movies/movie_list.html', {'movies': movies, 'query': query})
-    # ส่งข้อมูลหนังไปที่หน้าเว็บ (Template) ที่ชื่อ movie_list.html
-def movie_detail(request, movie_id):
-    movie = get_object_or_404(Movie, pk=movie_id)
-    reviews = movie.reviews.all().order_by('-created_at') # ดึงรีวิวทั้งหมดของหนังเรื่องนี้ (ใหม่สุดขึ้นก่อน)
 
-    if request.method == 'POST':
-        # ถ้ามีการกดส่งรีวิว
-        if request.user.is_authenticated:
+def movie_detail(request, tmdb_id):
+    # Fetch movie details from TMDb API
+    movie_data = get_movie_details(tmdb_id)
+    if not movie_data:
+        return render(request, '404.html', status=404)
+
+    # Sync movie with local database for likes/reviews
+    movie, created = Movie.objects.get_or_create(
+        tmdb_id=tmdb_id,
+        defaults={
+            'title': movie_data['title'],
+            'poster_path': movie_data['poster_url'].replace("https://image.tmdb.org/t/p/w500", "") if movie_data['poster_url'] else "",
+            'release_year': movie_data['release_year']
+        }
+    )
+
+    reviews = movie.reviews.all()
+    user_liked = False
+    in_watchlist = False
+    form = ReviewForm()
+
+    if request.user.is_authenticated:
+        user_liked = movie.likes.filter(id=request.user.id).exists()
+        in_watchlist = movie.watchlist.filter(id=request.user.id).exists()
+        
+        if request.method == 'POST':
             form = ReviewForm(request.POST)
             if form.is_valid():
-                new_review = form.save(commit=False)
-                new_review.movie = movie      # บอกว่ารีวิวนี้ของหนังเรื่องนี้นะ
-                new_review.user = request.user # บอกว่าใครเป็นคนเขียน
-                new_review.save()
-                return redirect('movie_detail', movie_id=movie_id) # รีเฟรชหน้าเดิม
-        else:
-            return redirect('login') # ถ้าไม่ได้ล็อกอิน ให้ไปล็อกอินก่อน
-    else:
-        # ถ้าแค่เปิดเข้ามาดูเฉยๆ
-        form = ReviewForm()
-    return render(request, 'movies/movie_detail.html', {
-        'movie': movie, 
-        'reviews': reviews, 
-        'form': form
-    })
+                review = form.save(commit=False)
+                review.user = request.user
+                review.movie = movie
+                review.save()
+                return redirect('movie_detail', tmdb_id=tmdb_id)
 
-@login_required  # บังคับว่าต้องล็อกอินก่อนถึงจะกดไลก์ได้
-def toggle_like(request, movie_id):
-    movie = get_object_or_404(Movie, pk=movie_id)
-    
-    # เช็คว่าเราอยู่ในรายชื่อคนที่ไลก์หรือยัง?
-    if request.user in movie.likes.all():
-        movie.likes.remove(request.user)  # ถ้ามีแล้ว เอาออก (Unlike)
-    else:
-        movie.likes.add(request.user)     # ถ้ายังไม่มี ใส่เพิ่ม (Like)
-        
-    # ทำเสร็จแล้ว เด้งกลับไปหน้าเดิม (หน้ารายละเอียดหนัง)
-    return redirect('movie_detail', movie_id=movie_id)
+    context = {
+        'movie': movie_data,
+        'db_movie': movie,
+        'reviews': reviews,
+        'user_liked': user_liked,
+        'in_watchlist': in_watchlist,
+        'form': form
+    }
+    return render(request, 'movies/movie_detail.html', context)
 
 @login_required
-def toggle_watchlist(request, movie_id):
-    movie = get_object_or_404(Movie, pk=movie_id)
-    
-    # ถ้ามีอยู่ในลิสต์แล้ว ให้เอาออก / ถ้ายังไม่มี ให้เพิ่มเข้าไป
-    if request.user in movie.watchlist.all():
+def toggle_like(request, tmdb_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+        
+    movie = get_object_or_404(Movie, tmdb_id=tmdb_id)
+    if movie.likes.filter(id=request.user.id).exists():
+        movie.likes.remove(request.user)
+        liked = False
+    else:
+        movie.likes.add(request.user)
+        liked = True
+    return JsonResponse({'liked': liked, 'total_likes': movie.total_likes})
+
+@login_required
+def toggle_watchlist(request, tmdb_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    movie = get_object_or_404(Movie, tmdb_id=tmdb_id)
+    if movie.watchlist.filter(id=request.user.id).exists():
         movie.watchlist.remove(request.user)
+        added = False
     else:
         movie.watchlist.add(request.user)
-        
-    return redirect('movie_detail', movie_id=movie_id)
+        added = True
+    return JsonResponse({'added': added})
+
+def search_autocomplete(request):
+    query = request.GET.get('q', '')
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+    
+    movies = search_movies(query)
+    return JsonResponse({'results': movies[:5]})
