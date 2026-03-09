@@ -6,4 +6,6 @@ urlpatterns = [
     path('movie/<int:tmdb_id>/', views.movie_detail, name='movie_detail'),
     path('movie/<int:tmdb_id>/like/', views.toggle_like, name='toggle_like'),
     path('movie/<int:tmdb_id>/watchlist/', views.toggle_watchlist, name='toggle_watchlist'),
+    path('review/<int:review_id>/delete/', views.delete_review, name='delete_review'),
+    path('search-autocomplete/', views.search_autocomplete, name='search_autocomplete'),
 ]

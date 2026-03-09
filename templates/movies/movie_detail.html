@@ -162,69 +162,106 @@
             <section class="py-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2 class="section-title mb-0">Member Reviews</h2>
-                    {% if reviews %}
-                    <span class="badge btn-glass border-0">{{ reviews|length }} Reviews</span>
-                    {% endif %}
+                    {% if reviews %}<span class="badge btn-glass border-0">{{ reviews|length }} Reviews</span>{% endif %}
                 </div>
 
+                {% if messages %}{% for message in messages %}
+                <div
+                    class="alert border-0 mb-4 animate-up small d-flex align-items-center gap-2 {% if message.tags == 'success' %}alert-success-custom{% else %}alert-error-custom{% endif %}">
+                    <i
+                        class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% else %}bi-exclamation-circle-fill{% endif %}"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}{% endif %}
+
                 {% if user.is_authenticated %}
-                <div class="bg-card-glass p-4 rounded-4 mb-5 border border-subtle shadow-pro animate-up">
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="row g-4">
-                            <div class="col-md-4 col-xl-3">
-                                <label class="form-label text-white-50 small fw-bold tracking-wider">YOUR RATING</label>
-                                <div class="star-rating-interactive mt-2">
-                                    {% for i in "54321"|make_list %}
-                                    <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" {% if form.rating.value|slugify == i %}checked{% endif %}>
-                                    <label for="star{{ i }}" title="{{ i }} stars">
-                                        <i class="bi bi-star-fill"></i>
-                                    </label>
-                                    {% endfor %}
-                                </div>
-                                <div class="d-none">
-                                    {{ form.rating }}
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label text-white-50 small fw-bold tracking-wider">YOUR
-                                    THOUGHTS</label>
-                                {{ form.text }}
-                            </div>
+                <div
+                    class="bg-card-glass p-4 p-md-5 rounded-4 mb-5 border {% if user_review %}border-brand-blue{% else %}border-subtle{% endif %} shadow-pro animate-up">
+                    {% if user_review %}
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-pencil-square text-brand-blue"></i>
+                            <span class="text-white-50 small fw-bold tracking-wider">EDIT YOUR REVIEW</span>
                         </div>
-                        <button type="submit" class="btn btn-brand mt-4 px-5 fw-bold">POST REVIEW</button>
+                        <a href="{% url 'delete_review' user_review.id %}"
+                            class="btn btn-sm btn-danger-ghost d-flex align-items-center gap-1"
+                            onclick="return confirm('Delete your review?')">
+                            <i class="bi bi-trash3"></i> Delete
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="text-white-50 small fw-bold tracking-wider mb-4">WRITE A REVIEW</p>
+                    {% endif %}
+
+                    <form method="post" id="reviewForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="rating" id="ratingInput" value="{{ user_review.rating|default:'' }}">
+
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small fw-bold tracking-wider d-block mb-3">YOUR
+                                RATING</label>
+                            <div class="star-picker d-flex gap-1" id="starPicker">
+                                {% for i in "12345"|make_list %}<button type="button" class="star-btn"
+                                    data-value="{{ i }}"><i class="bi bi-star-fill"></i></button>{% endfor %}
+                            </div>
+                            <div class="mt-2 star-label text-muted small" id="starLabel">{% if user_review %}{{
+                                user_review.rating }} star{% if user_review.rating != 1 %}s{% endif %}{% else %}Click to
+                                rate{% endif %}</div>
+                            {% if form.rating.errors %}<div class="text-danger small mt-1">Please select a rating.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small fw-bold tracking-wider">YOUR THOUGHTS</label>
+                            {{ form.text }}
+                        </div>
+
+                        <button type="submit" class="btn btn-brand px-5 fw-bold">
+                            {% if user_review %}<i class="bi bi-check2 me-2"></i>Update Review{% else %}<i
+                                class="bi bi-send me-2"></i>Post Review{% endif %}
+                        </button>
                     </form>
+                </div>
+                {% else %}
+                <div class="text-center py-4 bg-card-glass rounded-4 border border-subtle mb-5">
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-glass">
+                        <i class="bi bi-star me-2"></i>Sign in to rate &amp; review
+                    </a>
                 </div>
                 {% endif %}
 
                 <div class="review-list">
                     {% for review in reviews %}
                     <div
-                        class="review-item bg-card-glass p-4 p-md-5 rounded-4 border border-subtle mb-4 shadow-pro transition-smooth hover-glow-border">
-                        <div class="d-flex justify-content-between align-items-start mb-4">
+                        class="review-item bg-card-glass p-4 p-md-5 rounded-4 border mb-4 shadow-pro transition-smooth {% if review.user == request.user %}border-brand-blue{% else %}border-subtle hover-glow-border{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="bg-brand-blue-glass rounded-circle p-1">
-                                    <div class="bg-brand-blue rounded-circle d-flex align-items-center justify-content-center text-dark fw-black"
-                                        style="width: 45px; height: 45px;">
-                                        {{ review.user.username|slice:":1"|upper }}
-                                    </div>
+                                <div class="avatar-circle d-flex align-items-center justify-content-center fw-black {% if review.user == request.user %}bg-brand-blue text-dark{% else %}bg-brand-blue-glass text-brand-blue{% endif %}"
+                                    style="width: 46px; height: 46px; border-radius: 50%; font-size: 1.1rem;">
+                                    {{ review.user.username|slice:":1"|upper }}
                                 </div>
                                 <div>
-                                    <div class="text-white fw-bold h5 mb-0">{{ review.user.username }}</div>
-                                    <div class="text-muted small">{{ review.created_at|date:"F d, Y" }}</div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="text-white fw-bold">{{ review.user.username }}</span>
+                                        {% if review.user == request.user %}<span class="badge-you">YOU</span>{% endif %}
+                                    </div>
+                                    <div class="text-muted small">{{ review.created_at|date:"F d, Y" }}{% if review.updated_at != review.created_at %} · edited{% endif %}</div>
                                 </div>
                             </div>
-                            <div
-                                class="rating-badge bg-brand-green-glass px-3 py-1 rounded-pill text-brand-green fw-bold">
-                                {{ review.rating }} <small class="opacity-50 fs-6">★</small>
+                            <div class="d-flex flex-column align-items-end gap-1">
+                                <div class="d-flex gap-1">
+                                    {% for i in "12345"|make_list %}<i
+                                        class="bi {% if review.rating >= forloop.counter %}bi-star-fill text-brand-green{% else %}bi-star text-muted opacity-25{% endif %} star-display"></i>{% endfor %}
+                                </div>
+                                <span class="text-brand-green fw-bold small">{{ review.rating }}/5</span>
                             </div>
                         </div>
-                        <p class="text-white-50 lh-lg fs-5 mb-0 font-italic">"{{ review.text }}"</p>
+                        <p class="text-white-50 lh-lg mb-0" style="font-size: 1rem;">"{{ review.text }}"</p>
                     </div>
                     {% empty %}
                     <div class="text-center py-5 bg-card-glass rounded-4 border border-dashed border-subtle">
                         <i class="bi bi-chat-dots display-4 text-muted opacity-25 mb-3 d-block"></i>
-                        <p class="text-muted fs-5">No reviews yet. Share your cinematic experience first!</p>
+                        <p class="text-muted fs-5">No reviews yet. Be the first to share your thoughts!</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -244,6 +281,7 @@
                 </div>
                 {% endif %}
             </section>
+
         </div>
     </div>
 </div>
@@ -353,6 +391,90 @@
         background: rgba(8, 10, 12, 0.6) !important;
         border-radius: 12px !important;
     }
+
+    /* --- Star Picker --- */
+    .star-btn {
+        background: none;
+        border: none;
+        padding: 0 2px;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.15);
+        font-size: 1.7rem;
+        transition: color 0.15s, transform 0.1s;
+        line-height: 1;
+    }
+
+    .star-btn:hover,
+    .star-btn.hovered,
+    .star-btn.selected {
+        color: var(--brand-green);
+    }
+
+    .star-btn:hover {
+        transform: scale(1.15);
+    }
+
+    /* --- Badges --- */
+    .badge-you {
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        background: rgba(64, 188, 244, 0.15);
+        color: var(--brand-blue);
+        border: 1px solid rgba(64, 188, 244, 0.3);
+        border-radius: 4px;
+        padding: 1px 6px;
+        text-transform: uppercase;
+    }
+
+    /* --- Border blue --- */
+    .border-brand-blue {
+        border-color: var(--brand-blue) !important;
+    }
+
+    .text-brand-blue {
+        color: var(--brand-blue);
+    }
+
+    /* --- Alert messages --- */
+    .alert-success-custom {
+        background: rgba(0, 224, 84, 0.08);
+        color: var(--brand-green);
+        border-left: 3px solid var(--brand-green) !important;
+        border-radius: 12px;
+        padding: 12px 16px;
+    }
+
+    .alert-error-custom {
+        background: rgba(255, 71, 87, 0.08);
+        color: #ff4757;
+        border-left: 3px solid #ff4757 !important;
+        border-radius: 12px;
+        padding: 12px 16px;
+    }
+
+    /* --- Star display in review cards --- */
+    .star-display {
+        font-size: 0.85rem;
+    }
+
+    /* --- Delete ghost button --- */
+    .btn-danger-ghost {
+        background: rgba(255, 71, 87, 0.07);
+        border: 1px solid rgba(255, 71, 87, 0.3);
+        color: #ff4757;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 5px 12px;
+        transition: all 0.2s;
+    }
+
+    .btn-danger-ghost:hover {
+        background: rgba(255, 71, 87, 0.18);
+        color: #ff4757;
+        border-color: #ff4757;
+    }
 </style>
 {% endblock %}
 
@@ -399,5 +521,47 @@
             btn.disabled = false;
         }
     }
+</script>
+
+<script>
+    // Interactive star picker
+    (function () {
+        const picker = document.getElementById('starPicker');
+        const input = document.getElementById('ratingInput');
+        const label = document.getElementById('starLabel');
+        if (!picker) return;
+
+        const stars = picker.querySelectorAll('.star-btn');
+        const labels = ['', '1 star', '2 stars', '3 stars', '4 stars', '5 stars'];
+
+        // Set initial state from existing review
+        let currentValue = parseInt(input.value) || 0;
+        function paintStars(n, cls) {
+            stars.forEach((s, idx) => {
+                s.classList.toggle(cls, idx < n);
+            });
+        }
+        function applySelected(n) {
+            stars.forEach((s, idx) => s.classList.toggle('selected', idx < n));
+        }
+        applySelected(currentValue);
+
+        stars.forEach((star, idx) => {
+            star.addEventListener('mouseenter', () => {
+                paintStars(idx + 1, 'hovered');
+                label.textContent = labels[idx + 1];
+            });
+            star.addEventListener('click', () => {
+                currentValue = idx + 1;
+                input.value = currentValue;
+                applySelected(currentValue);
+                label.textContent = labels[currentValue];
+            });
+        });
+        picker.addEventListener('mouseleave', () => {
+            paintStars(0, 'hovered');
+            label.textContent = currentValue ? labels[currentValue] : 'Click to rate';
+        });
+    })();
 </script>
 {% endblock %}

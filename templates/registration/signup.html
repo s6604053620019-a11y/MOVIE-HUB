@@ -29,8 +29,7 @@
                     <div class="row g-4">
                         {% for field in form %}
                         <div class="col-12">
-                            <label class="form-label text-white-50 small fw-bold tracking-wider">{{ field.label|upper
-                                }}</label>
+                            <label class="form-label text-white-50 small fw-bold tracking-wider">{{ field.label}}</label>
                             {{ field }}
                             {% if field.errors %}
                             {% for error in field.errors %}

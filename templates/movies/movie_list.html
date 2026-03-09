@@ -16,22 +16,29 @@
                 <h1 class="display-3 fw-black text-white mb-3 text-gradient text-shadow-lg">{{ hero.title }}</h1>
                 <p class="hero-desc text-white mb-4 d-none d-md-block mw-50 text-shadow-sm"
                     style="font-weight: 500; opacity: 0.9;">
-                    {{ hero.overview|default:"Discover the latest cinematic masterpiece on CineShare."|truncatechars:180
-                    }}
+                    {{ hero.overview|default:"Discover the latest cinematic masterpiece on CineShare."|truncatechars:180 }}
                 </p>
                 <div class="d-flex flex-wrap gap-3">
                     <a href="{% url 'movie_detail' hero.id %}" class="btn btn-brand d-flex align-items-center gap-2">
                         <i class="bi bi-play-fill fs-5"></i> View Details
                     </a>
-                    <button class="btn btn-glass d-flex align-items-center gap-2">
-                        <i class="bi bi-plus-lg"></i> Watchlist
+                    {% if user.is_authenticated %}
+                    <button class="btn btn-glass d-flex align-items-center gap-2 hero-watchlist-btn"
+                        data-id="{{ hero.id }}" data-in="{{ hero.in_watchlist|yesno:'true,false' }}"
+                        onclick="toggleCardWatchlist(this)">
+                        <i class="bi bi-{% if hero.in_watchlist %}bookmark-check-fill{% else %}plus-lg{% endif %}"></i>
+                        {% if hero.in_watchlist %}In Watchlist{% else %}Watchlist{% endif %}
                     </button>
+                    {% else %}
+                    <a href="{% url 'login' %}?next=/" class="btn btn-glass d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-lg"></i> Watchlist
+                    </a>
+                    {% endif %}
                 </div>
             </div>
-            <div class="hero-img-bg position-absolute inset-0"
-                style="background: linear-gradient(to right, var(--bg-main) 10%, rgba(12,14,18,0.4) 60%, transparent 95%), 
-                                        linear-gradient(to top, var(--bg-main) 5%, rgba(12,14,18,0.2) 30%, transparent 60%),
-                                        url('https://image.tmdb.org/t/p/original{{ hero.backdrop_path }}') center 20% / cover no-repeat;">
+            <div class="hero-img-bg position-absolute inset-0" style="background: linear-gradient(to right, var(--bg-main) 10%, rgba(12,14,18,0.4) 60%, transparent 95%), 
+                                    linear-gradient(to top, var(--bg-main) 5%, rgba(12,14,18,0.2) 30%, transparent 60%),
+                                    url('{{ hero.backdrop_url }}') center 20% / cover no-repeat;">
             </div>
         </div>
         {% endwith %}
@@ -40,42 +47,156 @@
 </div>
 
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+    <!-- Section header + Filter Row -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 px-1">
         <h2 class="section-title mb-0">
-            {% if query %}Search results for "{{ query }}"{% else %}Popular this week{% endif %}
+            {% if query %}
+            Search results for "<span class="text-brand">{{ query }}</span>"
+            {% elif active_genre_name and active_year %}
+            {{ active_genre_name }} · {{ active_year }}
+            {% elif active_genre_name %}
+            {{ active_genre_name }}
+            {% elif active_year %}
+            Films from {{ active_year }}
+            {% else %}
+            Popular this week
+            {% endif %}
         </h2>
-        {% if not query %}
-        <div class="d-flex gap-2 d-none d-md-flex">
-            <button class="btn btn-glass py-1 px-3 small border-0 opacity-50">Filter</button>
-            <button class="btn btn-glass py-1 px-3 small border-0 text-brand">All</button>
+
+        <!-- Filter Controls -->
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <!-- Genre Dropdown -->
+            <div class="dropdown">
+                <button
+                    class="btn btn-glass py-1 px-3 small border-0 d-flex align-items-center gap-1 {% if active_genre %}text-brand{% endif %}"
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-collection-fill small"></i>
+                    {% if active_genre_name %}{{ active_genre_name }}{% else %}Genre{% endif %}
+                    <i class="bi bi-chevron-down small ms-1 opacity-50"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end border-0 shadow-lg genre-dropdown"
+                    style="background: var(--bg-card); border-radius: 12px; max-height: 300px; overflow-y: auto; min-width: 180px;">
+                    {% if active_genre %}
+                    <li>
+                        <a class="dropdown-item py-2 small text-muted"
+                            href="?{% if query %}q={{ query }}&{% endif %}{% if active_year %}year={{ active_year }}&{% endif %}page=1">
+                            <i class="bi bi-x-circle me-2"></i>All Genres
+                        </a>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider opacity-10">
+                    </li>
+                    {% endif %}
+                    {% for genre in genres %}
+                    <li>
+                        <a class="dropdown-item py-2 small {% if active_genre == genre.id|stringformat:'s' %}text-brand fw-bold{% endif %}"
+                            href="?genre={{ genre.id }}{% if active_year %}&year={{ active_year }}{% endif %}{% if query %}&q={{ query }}{% endif %}&page=1">
+                            {{ genre.name }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Year Dropdown -->
+            <div class="dropdown">
+                <button
+                    class="btn btn-glass py-1 px-3 small border-0 d-flex align-items-center gap-1 {% if active_year %}text-brand{% endif %}"
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-calendar3 small"></i>
+                    {% if active_year %}{{ active_year }}{% else %}Year{% endif %}
+                    <i class="bi bi-chevron-down small ms-1 opacity-50"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end border-0 shadow-lg"
+                    style="background: var(--bg-card); border-radius: 12px; max-height: 280px; overflow-y: auto; min-width: 120px;">
+                    {% if active_year %}
+                    <li>
+                        <a class="dropdown-item py-2 small text-muted"
+                            href="?{% if query %}q={{ query }}&{% endif %}{% if active_genre %}genre={{ active_genre }}&{% endif %}page=1">
+                            <i class="bi bi-x-circle me-2"></i>All Years
+                        </a>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider opacity-10">
+                    </li>
+                    {% endif %}
+                    {% for y in year_choices %}
+                    <li>
+                        <a class="dropdown-item py-2 small {% if active_year == y|stringformat:'s' %}text-brand fw-bold{% endif %}"
+                            href="?year={{ y }}{% if active_genre %}&genre={{ active_genre }}{% endif %}{% if query %}&q={{ query }}{% endif %}&page=1">
+                            {{ y }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Clear all if any filter active -->
+            {% if active_genre or active_year %}
+            <a href="/" class="btn py-1 px-2 small border-0 opacity-50 text-white d-flex align-items-center gap-1"
+                title="Clear filters">
+                <i class="bi bi-x-lg small"></i> Clear
+            </a>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 
+    <!-- Movie Grid -->
     <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3 g-md-4">
         {% for movie in movies %}
         <div class="col animate-up">
-            <a href="{% url 'movie_detail' movie.id %}" class="text-decoration-none d-block">
-                <div class="movie-card mb-3 shadow-pro">
-                    <img src="{{ movie.poster_url }}" class="poster-img" alt="{{ movie.title }}" loading="lazy">
-                    <div class="card-overlay position-absolute inset-0 d-flex align-items-center justify-content-center opacity-0 transition-smooth"
-                        style="background: rgba(0,0,0,0.6);">
-                        <div class="btn btn-glass rounded-circle p-3">
-                            <i class="bi bi-eye-fill fs-4 text-white"></i>
+            <div class="movie-card-wrapper position-relative">
+                <a href="{% url 'movie_detail' movie.id %}" class="text-decoration-none d-block">
+                    <div class="movie-card mb-2 shadow-pro">
+                        {% if movie.poster_url %}
+                        <img src="{{ movie.poster_url }}" class="poster-img" alt="{{ movie.title }}" loading="lazy">
+                        {% else %}
+                        <div class="poster-img d-flex align-items-center justify-content-center bg-dark text-muted">
+                            <i class="bi bi-film display-4 opacity-25"></i>
                         </div>
+                        {% endif %}
+
+                        <!-- Hover Overlay -->
+                        <div class="card-overlay position-absolute inset-0 d-flex align-items-center justify-content-center opacity-0 transition-smooth"
+                            style="background: rgba(0,0,0,0.55);">
+                            <div class="btn btn-glass rounded-circle p-3">
+                                <i class="bi bi-eye-fill fs-4 text-white"></i>
+                            </div>
+                        </div>
+
+                        <!-- Rating Badge (top-left) -->
+                        {% if movie.avg_rating %}
+                        <div class="rating-badge position-absolute top-0 start-0 m-2">
+                            <i class="bi bi-star-fill me-1"></i>{{ movie.avg_rating }}
+                        </div>
+                        {% endif %}
                     </div>
-                </div>
-                <div class="px-1 text-center text-md-start">
+                </a>
+
+                <!-- Watchlist button (top-right, visible on hover) -->
+                {% if user.is_authenticated %}
+                <button
+                    class="btn-watchlist-card position-absolute top-0 end-0 m-2 btn btn-glass rounded-circle p-1 opacity-0 transition-fast"
+                    data-id="{{ movie.id }}" data-in="{{ movie.in_watchlist|yesno:'true,false' }}"
+                    onclick="toggleCardWatchlist(this)"
+                    title="{% if movie.in_watchlist %}Remove from Watchlist{% else %}Add to Watchlist{% endif %}">
+                    <i
+                        class="bi bi-bookmark{% if movie.in_watchlist %}-check-fill text-brand{% else %}{% endif %} fs-6"></i>
+                </button>
+                {% endif %}
+
+                <div class="px-1">
                     <div class="fw-bold text-white text-truncate mb-1 hover-glow transition-fast"
-                        style="font-size: 0.95rem;">{{ movie.title }}</div>
-                    <div
-                        class="d-flex align-items-center justify-content-center justify-content-md-start gap-2 text-muted small">
+                        style="font-size: 0.9rem;">{{ movie.title }}</div>
+                    <div class="d-flex align-items-center gap-2 text-muted small">
                         <span>{{ movie.release_year }}</span>
+                        {% if movie.review_count > 0 %}
                         <span class="opacity-25 lh-1">•</span>
-                        <span class="text-brand fw-bold">Movie</span>
+                        <span class="text-dim" style="font-size:0.75rem;">{{ movie.review_count }} review{% if movie.review_count != 1 %}s{% endif %}</span>
+                        {% endif %}
                     </div>
                 </div>
-            </a>
+            </div>
         </div>
         {% empty %}
         <div class="col-12 text-center py-5">
@@ -83,11 +204,82 @@
                 <i class="bi bi-camera-reels display-1 text-dim opacity-25"></i>
             </div>
             <h3 class="text-white-50">No films found</h3>
-            <p class="text-muted">We couldn't find anything matching your search. Try broaden your keywords.</p>
+            <p class="text-muted">We couldn't find anything matching your search. Try broadening your keywords.</p>
             <a href="{% url 'home' %}" class="btn btn-brand mt-3">Back to Popular</a>
         </div>
         {% endfor %}
     </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <nav aria-label="Movie pagination" class="mt-5 mb-3">
+        <ul class="pagination justify-content-center gap-1" style="flex-wrap: wrap;">
+            <!-- Previous -->
+            {% if has_prev %}
+            <li class="page-item">
+                <a class="page-link page-btn"
+                    href="?{% if query %}q={{ query }}&{% endif %}{% if active_genre %}genre={{ active_genre }}&{% endif %}{% if active_year %}year={{ active_year }}&{% endif %}page={{ page|add:'-1' }}"
+                    aria-label="Previous">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link page-btn"><i class="bi bi-chevron-left"></i></span>
+            </li>
+            {% endif %}
+
+            <!-- Show first page + ellipsis if needed -->
+            {% if page_range.0 > 1 %}
+            <li class="page-item">
+                <a class="page-link page-btn"
+                    href="?{% if query %}q={{ query }}&{% endif %}{% if active_genre %}genre={{ active_genre }}&{% endif %}{% if active_year %}year={{ active_year }}&{% endif %}page=1">1</a>
+            </li>
+            {% if page_range.0 > 2 %}
+            <li class="page-item disabled"><span class="page-link page-btn opacity-40">…</span></li>
+            {% endif %}
+            {% endif %}
+
+            <!-- Page range -->
+            {% for p in page_range %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link page-btn"
+                    href="?{% if query %}q={{ query }}&{% endif %}{% if active_genre %}genre={{ active_genre }}&{% endif %}{% if active_year %}year={{ active_year }}&{% endif %}page={{ p }}">{{p}}</a>
+            </li>
+            {% endfor %}
+
+            <!-- Show last page + ellipsis if needed -->
+            {% if page_range %}
+            {% with last_page=page_range|last %}
+            {% if last_page < total_pages %} {% if last_page < total_pages|add:'-1' %} <li class="page-item disabled">
+                <span class="page-link page-btn opacity-40">…</span></li>
+                {% endif %}
+                <li class="page-item">
+                    <a class="page-link page-btn"
+                        href="?{% if query %}q={{ query }}&{% endif %}{% if active_genre %}genre={{ active_genre }}&{% endif %}{% if active_year %}year={{ active_year }}&{% endif %}page={{ total_pages }}">{{total_pages}}</a>
+                </li>
+                {% endif %}
+                {% endwith %}
+                {% endif %}
+
+                <!-- Next -->
+                {% if has_next %}
+                <li class="page-item">
+                    <a class="page-link page-btn"
+                        href="?{% if query %}q={{ query }}&{% endif %}{% if active_genre %}genre={{ active_genre }}&{% endif %}{% if active_year %}year={{ active_year }}&{% endif %}page={{ page|add:'1' }}"
+                        aria-label="Next">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link page-btn"><i class="bi bi-chevron-right"></i></span>
+                </li>
+                {% endif %}
+        </ul>
+        <p class="text-center text-muted small mt-2">Page {{ page }} of {{ total_pages }}</p>
+    </nav>
+    {% endif %}
 </div>
 
 <style>
@@ -102,12 +294,131 @@
         bottom: 0;
     }
 
-    .card-overlay:hover {
+    .movie-card-wrapper:hover .card-overlay {
         opacity: 1 !important;
     }
 
-    .movie-card:hover .card-overlay {
-        opacity: 1;
+    .movie-card-wrapper:hover .btn-watchlist-card {
+        opacity: 1 !important;
+    }
+
+    /* Rating badge */
+    .rating-badge {
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(6px);
+        color: var(--brand-green);
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 224, 84, 0.3);
+        letter-spacing: 0.02em;
+        line-height: 1.6;
+    }
+
+    /* Watchlist card button */
+    .btn-watchlist-card {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        transition: all 0.2s;
+    }
+
+    .btn-watchlist-card:hover {
+        background: rgba(64, 188, 244, 0.25) !important;
+        border-color: var(--brand-blue) !important;
+    }
+
+    .btn-watchlist-card i.text-brand {
+        color: var(--brand-blue) !important;
+    }
+
+    /* Genre dropdown items */
+    .genre-dropdown .dropdown-item:hover,
+    .genre-dropdown .dropdown-item:focus {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-bright);
+    }
+
+    /* Pagination */
+    .page-btn {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: var(--text-muted) !important;
+        border-radius: 10px !important;
+        min-width: 40px;
+        text-align: center;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+
+    .page-btn:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+        color: var(--text-bright) !important;
+        transform: translateY(-1px);
+    }
+
+    .page-item.active .page-btn {
+        background: var(--brand-blue) !important;
+        border-color: var(--brand-blue) !important;
+        color: #fff !important;
+        box-shadow: 0 0 14px rgba(64, 188, 244, 0.35);
+    }
+
+    .page-item.disabled .page-btn {
+        opacity: 0.3;
+        cursor: default;
+    }
+
+    .opacity-40 {
+        opacity: 0.4;
     }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle watchlist from movie list/card
+    async function toggleCardWatchlist(btn) {
+        const tmdbId = btn.dataset.id;
+        const inWatchlist = btn.dataset.in === 'true';
+        const icon = btn.querySelector('i');
+
+        btn.disabled = true;
+        try {
+            const resp = await fetch(`/movie/${tmdbId}/watchlist/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (resp.status === 401 || resp.status === 403) {
+                window.location.href = '/accounts/login/?next=/';
+                return;
+            }
+            const data = await resp.json();
+            btn.dataset.in = data.added ? 'true' : 'false';
+            if (data.added) {
+                icon.className = 'bi bi-bookmark-check-fill text-brand fs-6';
+                btn.title = 'Remove from Watchlist';
+                // Hero button text update
+                const textNode = btn.childNodes[btn.childNodes.length - 1];
+                if (textNode && textNode.nodeType === 3) textNode.textContent = ' In Watchlist';
+            } else {
+                icon.className = 'bi bi-bookmark fs-6';
+                btn.title = 'Add to Watchlist';
+                const textNode = btn.childNodes[btn.childNodes.length - 1];
+                if (textNode && textNode.nodeType === 3) textNode.textContent = ' Watchlist';
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
 {% endblock %}

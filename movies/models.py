@@ -47,9 +47,11 @@ class Review(models.Model):
     rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
+        unique_together = ('user', 'movie')
 
     def __str__(self):
         return f"{self.user.username} - {self.movie.title} ({self.rating})"
