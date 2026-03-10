@@ -11,7 +11,7 @@
         <!-- Poster & Quick Stats -->
         <div class="col-lg-4 col-xl-3">
             <div class="movie-card shadow-pro mb-4">
-                <img src="{{ movie.poster_url }}" class="poster-img w-100" alt="{{ movie.title }}">
+                <img src="{{ movie.poster_url }}" class="poster-img w-100" alt="{{ movie.title }}" loading="lazy">
             </div>
 
             <div class="d-grid gap-3 mb-5">
@@ -32,18 +32,18 @@
                 {% endif %}
             </div>
 
-            <div class="metadata-grid bg-card-glass p-4 rounded-4 d-none d-lg-block">
-                <h6 class="text-white-50 fw-bold small mb-4 tracking-wider">INFORMATION</h6>
+            <div class="metadata-grid glass-card p-4 rounded-4 d-none d-lg-block shadow-pro">
+                <h6 class="text-white fw-bold small mb-4 tracking-wider">INFORMATION</h6>
                 <div class="mb-3">
-                    <label class="d-block text-muted small">Release Date</label>
+                    <label class="d-block text-white-50 small">Release Date</label>
                     <span class="text-white fw-semibold">{{ movie.release_year }}</span>
                 </div>
                 <div class="mb-3">
-                    <label class="d-block text-muted small">Director</label>
+                    <label class="d-block text-white-50 small">Director</label>
                     <span class="text-white fw-semibold">{{ movie.director }}</span>
                 </div>
                 <div class="mb-3">
-                    <label class="d-block text-muted small">Runtime</label>
+                    <label class="d-block text-white-50 small">Runtime</label>
                     <span class="text-white fw-semibold">{{ movie.runtime }} minutes</span>
                 </div>
             </div>
@@ -76,7 +76,7 @@
             </header>
 
             <section class="mb-5">
-                <div class="rating-summary bg-card-glass p-4 rounded-4 mb-4 border border-subtle shadow-pro">
+                <div class="rating-summary glass-card p-4 rounded-4 mb-4 border border-subtle shadow-pro">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <h6 class="text-white-50 fw-bold small tracking-wider mb-0">RATINGS</h6>
                         <span class="text-white-50 small fw-bold tracking-wider">{{ db_movie.rating_count }} FANS</span>
@@ -140,7 +140,7 @@
                                 {% if person.profile_url %}
                                 <img src="{{ person.profile_url }}"
                                     class="rounded-circle shadow-pro cast-avatar border border-subtle"
-                                    style="width: 100px; height: 100px; object-fit: cover;">
+                                    style="width: 100px; height: 100px; object-fit: cover;" loading="lazy">
                                 {% else %}
                                 <div class="rounded-circle bg-dark border border-subtle d-flex align-items-center justify-content-center mx-auto shadow-pro"
                                     style="width: 100px; height: 100px;">
@@ -159,10 +159,11 @@
             </section>
 
             <!-- Reviews -->
-            <section class="py-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="section-title mb-0">Member Reviews</h2>
-                    {% if reviews %}<span class="badge btn-glass border-0">{{ reviews|length }} Reviews</span>{% endif %}
+            <section class="py-4" id="reviews">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="section-title mb-0">Member Reviews
+                        {% if reviews %}<span class="review-count-badge ms-2">{{ reviews|length }}</span>{% endif %}
+                    </h2>
                 </div>
 
                 {% if messages %}{% for message in messages %}
@@ -176,16 +177,15 @@
 
                 {% if user.is_authenticated %}
                 <div
-                    class="bg-card-glass p-4 p-md-5 rounded-4 mb-5 border {% if user_review %}border-brand-blue{% else %}border-subtle{% endif %} shadow-pro animate-up">
+                    class="glass-card p-4 p-md-5 rounded-4 mb-5 border {% if user_review %}border-brand-blue{% else %}border-subtle{% endif %} shadow-pro animate-up">
                     {% if user_review %}
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div class="d-flex align-items-center gap-2">
                             <i class="bi bi-pencil-square text-brand-blue"></i>
                             <span class="text-white-50 small fw-bold tracking-wider">EDIT YOUR REVIEW</span>
                         </div>
-                        <a href="{% url 'delete_review' user_review.id %}"
-                            class="btn btn-sm btn-danger-ghost d-flex align-items-center gap-1"
-                            onclick="return confirm('Delete your review?')">
+                        <a href="#" class="btn btn-sm btn-danger-ghost d-flex align-items-center gap-1"
+                            onclick="deleteReview(event, {{ user_review.id }})">
                             <i class="bi bi-trash3"></i> Delete
                         </a>
                     </div>
@@ -204,9 +204,9 @@
                                 {% for i in "12345"|make_list %}<button type="button" class="star-btn"
                                     data-value="{{ i }}"><i class="bi bi-star-fill"></i></button>{% endfor %}
                             </div>
-                            <div class="mt-2 star-label text-muted small" id="starLabel">{% if user_review %}{{
-                                user_review.rating }} star{% if user_review.rating != 1 %}s{% endif %}{% else %}Click to
-                                rate{% endif %}</div>
+                            <div class="mt-2 star-label text-muted small" id="starLabel">{% if user_review %}
+                                {{ user_review.rating }} star{% if user_review.rating != 1 %}s{% endif %}{% else %}Click
+                                to rate{% endif %}</div>
                             {% if form.rating.errors %}<div class="text-danger small mt-1">Please select a rating.</div>
                             {% endif %}
                         </div>
@@ -230,51 +230,107 @@
                 </div>
                 {% endif %}
 
-                <div class="review-list">
+                {% if reviews %}
+                <!-- Sort Controls -->
+                <div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+                    <span class="text-white-50 small fw-bold tracking-wider me-1">SORT BY</span>
+                    <button class="sort-btn active" data-sort="newest"><i class="bi bi-clock me-1"></i>Newest</button>
+                    <button class="sort-btn" data-sort="highest"><i class="bi bi-arrow-up me-1"></i>Highest
+                        Rated</button>
+                    <button class="sort-btn" data-sort="lowest"><i class="bi bi-arrow-down me-1"></i>Lowest
+                        Rated</button>
+                </div>
+                {% endif %}
+
+                <div class="review-list" id="reviewList">
                     {% for review in reviews %}
-                    <div
-                        class="review-item bg-card-glass p-4 p-md-5 rounded-4 border mb-4 shadow-pro transition-smooth {% if review.user == request.user %}border-brand-blue{% else %}border-subtle hover-glow-border{% endif %}">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="avatar-circle d-flex align-items-center justify-content-center fw-black {% if review.user == request.user %}bg-brand-blue text-dark{% else %}bg-brand-blue-glass text-brand-blue{% endif %}"
-                                    style="width: 46px; height: 46px; border-radius: 50%; font-size: 1.1rem;">
-                                    {{ review.user.username|slice:":1"|upper }}
-                                </div>
-                                <div>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="text-white fw-bold">{{ review.user.username }}</span>
-                                        {% if review.user == request.user %}<span class="badge-you">YOU</span>{% endif %}
+                    <div class="review-item glass-card rounded-4 border mb-4 shadow-pro transition-smooth {% if review.user == request.user %}border-brand-blue{% else %}border-subtle hover-glow-border{% endif %}"
+                        data-rating="{{ review.rating }}" data-date="{{ review.created_at|date:'U' }}">
+
+                        <!-- Review Header -->
+                        <div class="review-header px-4 px-md-5 pt-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div
+                                        class="avatar-initial avatar-color-{{ review.user.username|slice:':1'|lower }}">
+                                        {{ review.user.username|slice:":1"|upper }}
                                     </div>
-                                    <div class="text-muted small">{{ review.created_at|date:"F d, Y" }}{% if review.updated_at != review.created_at %} · edited{% endif %}</div>
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <span class="text-white fw-bold">{{ review.user.username }}</span>
+                                            {% if review.user == request.user %}
+                                            <span class="badge-you">YOU</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-muted extra-small mt-1">
+                                            <i class="bi bi-calendar3 me-1 opacity-50"></i>
+                                            {{ review.created_at|date:"d M Y" }}
+                                            {% if review.updated_at != review.created_at %}
+                                            <span class="ms-1 opacity-75">· edited</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <!-- Rating Badge -->
+                                    <div class="review-rating-badge">
+                                        <span class="rating-num">{{ review.rating }}</span>
+                                        <span class="rating-denom">/5</span>
+                                    </div>
+                                    {% if review.user == request.user %}
+                                    <a href="#reviewForm" class="btn-edit-review">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
-                            <div class="d-flex flex-column align-items-end gap-1">
-                                <div class="d-flex gap-1">
-                                    {% for i in "12345"|make_list %}<i
-                                        class="bi {% if review.rating >= forloop.counter %}bi-star-fill text-brand-green{% else %}bi-star text-muted opacity-25{% endif %} star-display"></i>{% endfor %}
-                                </div>
-                                <span class="text-brand-green fw-bold small">{{ review.rating }}/5</span>
+
+                            <!-- Star Row -->
+                            <div class="d-flex gap-1 mt-3 mb-0">
+                                {% for i in "12345"|make_list %}
+                                <i
+                                    class="bi {% if review.rating >= forloop.counter %}bi-star-fill review-star-filled{% else %}bi-star review-star-empty{% endif %}"></i>
+                                {% endfor %}
                             </div>
                         </div>
-                        <p class="text-white-50 lh-lg mb-0" style="font-size: 1rem;">"{{ review.text }}"</p>
+
+                        <!-- Divider -->
+                        <div class="review-divider mx-4 mx-md-5"></div>
+
+                        <!-- Review Body -->
+                        <div class="review-body px-4 px-md-5 pb-4">
+                            <div class="review-text-wrapper">
+                                <p class="review-text mb-0" data-full="{{ review.text }}">
+                                    {{ review.text }}
+                                </p>
+                                <button class="read-more-btn d-none" onclick="toggleReadMore(this)">
+                                    Read more <i class="bi bi-chevron-down ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                     {% empty %}
-                    <div class="text-center py-5 bg-card-glass rounded-4 border border-dashed border-subtle">
-                        <i class="bi bi-chat-dots display-4 text-muted opacity-25 mb-3 d-block"></i>
-                        <p class="text-muted fs-5">No reviews yet. Be the first to share your thoughts!</p>
+                    <div class="text-center py-5 rounded-4 border border-dashed border-subtle"
+                        style="border-style: dashed !important; background: rgba(255,255,255,0.02);">
+                        <i class="bi bi-chat-quote display-4 text-muted opacity-25 mb-3 d-block"></i>
+                        <p class="text-muted fs-6 mb-1">No reviews yet.</p>
+                        <p class="text-muted small opacity-50">Be the first to share your thoughts!</p>
                     </div>
                     {% endfor %}
                 </div>
 
                 {% if movie.recommendations %}
-                <div class="mt-5 pt-4">
-                    <h2 class="section-title">Similar Discovery</h2>
-                    <div class="row row-cols-3 row-cols-md-4 row-cols-lg-6 g-3">
+                <div class="mt-5 pt-5">
+                    <h2 class="section-title mb-4">ภาพยนตร์ที่คุณอาจสนใจ</h2>
+                    <div class="row row-cols-3 row-cols-md-4 row-cols-lg-6 g-3 g-md-4">
                         {% for rec in movie.recommendations %}
                         <div class="col">
-                            <a href="{% url 'movie_detail' rec.id %}" class="movie-card d-block shadow-pro border-0">
-                                <img src="{{ rec.poster_url }}" class="poster-img" alt="{{ rec.title }}">
+                            <a href="{% url 'movie_detail' rec.id %}"
+                                class="movie-card d-block shadow-pro border-0 related-movie-card">
+                                <img src="{{ rec.poster_url }}" class="poster-img" alt="{{ rec.title }}" loading="lazy">
                             </a>
+                            <span class="related-title text-truncate">{{ rec.title }}</span>
                         </div>
                         {% endfor %}
                     </div>
@@ -295,10 +351,8 @@
     }
 
     .bg-card-glass {
-        background: rgba(22, 27, 34, 0.4);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid var(--border-subtle);
+        display: none;
+        /* Replaced by .glass-card in style.css */
     }
 
     .rating-histogram {
@@ -475,6 +529,221 @@
         color: #ff4757;
         border-color: #ff4757;
     }
+
+    /* ============================================
+       REVIEW SYSTEM — Enhanced UI
+    ============================================ */
+
+    /* Count badge next to section title */
+    .review-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(64, 188, 244, 0.12);
+        color: var(--brand-blue);
+        border: 1px solid rgba(64, 188, 244, 0.25);
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 2px 10px;
+        letter-spacing: 0.04em;
+        vertical-align: middle;
+    }
+
+    /* Sort buttons row */
+    .sort-btn {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+        border-radius: 20px;
+        padding: 5px 14px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        letter-spacing: 0.02em;
+    }
+
+    .sort-btn:hover {
+        background: rgba(255, 255, 255, 0.09);
+        color: var(--text-bright);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .sort-btn.active {
+        background: rgba(64, 188, 244, 0.12);
+        color: var(--brand-blue);
+        border-color: rgba(64, 188, 244, 0.35);
+    }
+
+    /* Review card layout */
+    .review-header {
+        padding-top: 1.5rem;
+    }
+
+    .review-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.06);
+        margin-top: 1.2rem;
+        margin-bottom: 1.2rem;
+    }
+
+    /* Rating badge (top-right corner of card) */
+    .review-rating-badge {
+        background: linear-gradient(135deg, rgba(0, 224, 84, 0.15) 0%, rgba(0, 224, 84, 0.05) 100%);
+        border: 1px solid rgba(0, 224, 84, 0.25);
+        border-radius: 12px;
+        padding: 6px 14px;
+        text-align: center;
+        min-width: 56px;
+    }
+
+    .review-rating-badge .rating-num {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--brand-green);
+        line-height: 1;
+    }
+
+    .review-rating-badge .rating-denom {
+        font-size: 0.7rem;
+        color: rgba(0, 224, 84, 0.5);
+        font-weight: 600;
+        margin-left: 1px;
+    }
+
+    /* Star icons inside review */
+    .review-star-filled {
+        color: var(--brand-green);
+        font-size: 0.8rem;
+    }
+
+    .review-star-empty {
+        color: rgba(255, 255, 255, 0.15);
+        font-size: 0.8rem;
+    }
+
+    /* Review body text */
+    .review-text {
+        color: rgba(225, 231, 239, 0.85);
+        font-size: 0.97rem;
+        line-height: 1.8;
+        font-style: normal;
+        white-space: pre-line;
+    }
+
+    /* Read more toggle */
+    .read-more-btn {
+        background: none;
+        border: none;
+        color: var(--brand-blue);
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0;
+        margin-top: 0.5rem;
+        cursor: pointer;
+        transition: color 0.2s;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .read-more-btn:hover {
+        color: #7dd8f9;
+    }
+
+    /* Collapsed state */
+    .review-text.collapsed {
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Edit button inside review card */
+    .btn-edit-review {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(64, 188, 244, 0.08);
+        border: 1px solid rgba(64, 188, 244, 0.2);
+        border-radius: 8px;
+        color: var(--brand-blue);
+        font-size: 0.8rem;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-edit-review:hover {
+        background: rgba(64, 188, 244, 0.18);
+        color: var(--brand-blue);
+        transform: translateY(-1px);
+    }
+
+    /* Avatar color variants */
+    .avatar-color-a,
+    .avatar-color-b,
+    .avatar-color-c {
+        background: rgba(64, 188, 244, 0.15);
+        color: var(--brand-blue);
+    }
+
+    .avatar-color-d,
+    .avatar-color-e,
+    .avatar-color-f {
+        background: rgba(0, 224, 84, 0.12);
+        color: var(--brand-green);
+    }
+
+    .avatar-color-g,
+    .avatar-color-h,
+    .avatar-color-i {
+        background: rgba(255, 128, 0, 0.12);
+        color: var(--brand-orange);
+    }
+
+    .avatar-color-j,
+    .avatar-color-k,
+    .avatar-color-l {
+        background: rgba(160, 80, 240, 0.12);
+        color: #a050f0;
+    }
+
+    .avatar-color-m,
+    .avatar-color-n,
+    .avatar-color-o {
+        background: rgba(255, 71, 87, 0.12);
+        color: #ff4757;
+    }
+
+    .avatar-color-p,
+    .avatar-color-q,
+    .avatar-color-r {
+        background: rgba(64, 188, 244, 0.15);
+        color: var(--brand-blue);
+    }
+
+    .avatar-color-s,
+    .avatar-color-t,
+    .avatar-color-u {
+        background: rgba(0, 224, 84, 0.12);
+        color: var(--brand-green);
+    }
+
+    .avatar-color-v,
+    .avatar-color-w,
+    .avatar-color-x {
+        background: rgba(255, 215, 0, 0.12);
+        color: #ffd700;
+    }
+
+    .avatar-color-y,
+    .avatar-color-z {
+        background: rgba(255, 128, 0, 0.12);
+        color: var(--brand-orange);
+    }
 </style>
 {% endblock %}
 
@@ -509,16 +778,87 @@
                 btn.classList.toggle('liked', data.liked);
                 icon.className = data.liked ? 'bi bi-heart-fill me-2' : 'bi bi-heart me-2';
                 textSpan.innerText = data.liked ? 'Liked' : 'Like';
+                showToast(data.liked ? 'Added to favorites ❤️' : 'Removed from favorites', data.liked ? 'success' : 'info');
             } else {
                 btn.classList.toggle('active', data.added);
                 icon.className = data.added ? 'bi bi-bookmark-check-fill me-2' : 'bi bi-bookmark me-2';
                 textSpan.innerText = data.added ? 'In Watchlist' : 'Watchlist';
+                showToast(data.added ? 'Added to watchlist 📚' : 'Removed from watchlist', data.added ? 'success' : 'info');
             }
         } catch (error) {
             console.error('Error toggling action:', error);
             btn.innerHTML = originalHtml;
+            showToast('Something went wrong. Please try again.', 'error');
         } finally {
             btn.disabled = false;
+        }
+    }
+
+    // ── AJAX Review Submit ──
+    (function () {
+        const form = document.getElementById('reviewForm');
+        if (!form) return;
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action || window.location.pathname, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(data.is_edit ? 'Review updated! ✨' : 'Review posted! 🎬', 'success');
+                    // Reload to show updated review (simplest approach for template-rendered reviews)
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    showToast(data.error || 'Please select a star rating.', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                }
+            } catch (error) {
+                console.error('Review submit error:', error);
+                showToast('Failed to submit review. Please try again.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+            }
+        });
+    })();
+
+    // ── AJAX Review Delete ──
+    async function deleteReview(e, reviewId) {
+        e.preventDefault();
+        if (!confirm('Delete your review?')) return;
+
+        try {
+            const response = await fetch(`/review/${reviewId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showToast('Review deleted', 'info');
+                setTimeout(() => window.location.reload(), 800);
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            showToast('Failed to delete review.', 'error');
         }
     }
 </script>
@@ -563,5 +903,77 @@
             label.textContent = currentValue ? labels[currentValue] : 'Click to rate';
         });
     })();
+</script>
+
+<script>
+    // ── Review Sort ──────────────────────────────────────────────────────
+    (function () {
+        const sortBtns = document.querySelectorAll('.sort-btn');
+        const list = document.getElementById('reviewList');
+        if (!list || sortBtns.length === 0) return;
+
+        sortBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                sortBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const mode = btn.dataset.sort;
+                const items = Array.from(list.querySelectorAll('.review-item'));
+
+                items.sort((a, b) => {
+                    if (mode === 'newest') {
+                        return parseInt(b.dataset.date) - parseInt(a.dataset.date);
+                    } else if (mode === 'highest') {
+                        return parseInt(b.dataset.rating) - parseInt(a.dataset.rating);
+                    } else {
+                        return parseInt(a.dataset.rating) - parseInt(b.dataset.rating);
+                    }
+                });
+
+                items.forEach(item => {
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateY(8px)';
+                    list.appendChild(item);
+                });
+
+                requestAnimationFrame(() => {
+                    items.forEach((item, i) => {
+                        setTimeout(() => {
+                            item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                            item.style.opacity = '1';
+                            item.style.transform = 'translateY(0)';
+                        }, i * 50);
+                    });
+                });
+            });
+        });
+    })();
+
+    // ── Read More / Read Less ─────────────────────────────────────────────
+    const READ_MORE_LIMIT = 280; // characters
+
+    function toggleReadMore(btn) {
+        const p = btn.previousElementSibling;
+        const isCollapsed = p.classList.contains('collapsed');
+        if (isCollapsed) {
+            p.classList.remove('collapsed');
+            btn.innerHTML = 'Show less <i class="bi bi-chevron-up ms-1"></i>';
+        } else {
+            p.classList.add('collapsed');
+            btn.innerHTML = 'Read more <i class="bi bi-chevron-down ms-1"></i>';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.review-text').forEach(p => {
+            if (p.textContent.trim().length > READ_MORE_LIMIT) {
+                p.classList.add('collapsed');
+                const btn = p.nextElementSibling;
+                if (btn && btn.classList.contains('read-more-btn')) {
+                    btn.classList.remove('d-none');
+                }
+            }
+        });
+    });
 </script>
 {% endblock %}

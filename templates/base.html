@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -14,8 +14,10 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg py-3 sticky-top">
+    <!-- ═══════════ NAVBAR ═══════════ -->
+    <nav class="navbar navbar-expand-lg sticky-top navbar-cineshare" id="mainNav">
         <div class="container">
+            <!-- Brand -->
             <a class="navbar-brand brand-logo d-flex align-items-center" href="{% url 'home' %}">
                 <div class="brand-dots me-3">
                     <span class="dot" style="background-color: var(--brand-green);"></span>
@@ -25,31 +27,49 @@
                 <span class="hover-glow">CineShare</span>
             </a>
 
+            <!-- Mobile Toggle -->
             <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarNav">
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                aria-label="Toggle navigation">
                 <i class="bi bi-list text-white fs-2"></i>
             </button>
 
+            <!-- Collapsible Content -->
             <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Search Bar (Center) -->
                 <div class="search-container mx-auto my-3 my-lg-0 px-lg-4">
                     <div class="position-relative">
-                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                        <input class="form-control search-box ps-5" type="search" id="liveSearch"
+                        <i
+                            class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted search-icon"></i>
+                        <input class="form-control search-box ps-5 pe-5" type="search" id="liveSearch"
                             placeholder="Search for films, actors..." autocomplete="off">
+                        <kbd
+                            class="search-shortcut d-none d-lg-inline-flex position-absolute top-50 end-0 translate-middle-y me-3">Ctrl
+                            K</kbd>
                         <div id="searchResults" class="search-results-dropdown shadow-lg d-none"></div>
+                        <!-- Loading spinner -->
+                        <div class="search-spinner d-none position-absolute top-50 end-0 translate-middle-y me-3"
+                            id="searchSpinner">
+                            <div class="spinner-border spinner-border-sm text-muted" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Nav Items (Right) -->
                 <ul class="navbar-nav align-items-center gap-2">
                     {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle btn-glass px-4 py-2 border-0 d-flex align-items-center gap-2"
-                            href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle"></i>
-                            {{ user.username }}
+                        <a class="nav-link dropdown-toggle nav-user-btn px-3 py-2 d-flex align-items-center gap-2"
+                            href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="nav-avatar">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <span class="nav-username">{{ user.username }}</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-0 shadow-lg mt-3"
-                            style="background: var(--bg-card); border-radius: 12px;">
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-0 shadow-lg mt-3 dropdown-custom"
+                            aria-labelledby="userDropdown">
                             <li><a class="dropdown-item py-2" href="{% url 'profile' %}"><i
                                         class="bi bi-person me-2"></i> Profile</a></li>
                             <li>
@@ -78,6 +98,7 @@
         </div>
     </nav>
 
+    <!-- ═══════════ MAIN CONTENT ═══════════ -->
     <main>
         <div class="container mt-3">
             {% if messages %}
@@ -95,17 +116,42 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="py-5 mt-5 border-top" style="border-color: var(--border-subtle) !important;">
+    <!-- ═══════════ TOAST NOTIFICATIONS ═══════════ -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- ═══════════ FOOTER ═══════════ -->
+    <footer class="site-footer py-5 mt-5">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                <div class="col-md-4 text-center text-md-start mb-4 mb-md-0">
+                    <a class="d-inline-flex align-items-center text-decoration-none mb-2" href="{% url 'home' %}">
+                        <div class="brand-dots me-2">
+                            <span class="dot"
+                                style="background-color: var(--brand-green); width:7px; height:7px;"></span>
+                            <span class="dot"
+                                style="background-color: var(--brand-orange); width:7px; height:7px;"></span>
+                            <span class="dot"
+                                style="background-color: var(--brand-blue); width:7px; height:7px;"></span>
+                        </div>
+                        <span class="text-white fw-bold">CineShare</span>
+                    </a>
                     <p class="text-muted small mb-0">&copy; 2024 CineShare. Powered by cinematic passion.</p>
                 </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <div class="d-flex justify-content-center justify-content-md-end gap-3 text-muted">
-                        <a href="#" class="text-reset text-decoration-none small hover-bright">Privacy</a>
-                        <a href="#" class="text-reset text-decoration-none small hover-bright">Terms</a>
-                        <a href="#" class="text-reset text-decoration-none small hover-bright">Contact</a>
+                <div class="col-md-4 text-center mb-4 mb-md-0">
+                    <div class="d-flex justify-content-center gap-3 text-muted">
+                        <a href="#" class="footer-link">Privacy</a>
+                        <span class="opacity-25">•</span>
+                        <a href="#" class="footer-link">Terms</a>
+                        <span class="opacity-25">•</span>
+                        <a href="#" class="footer-link">Contact</a>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center text-md-end">
+                    <div class="d-flex justify-content-center justify-content-md-end gap-3">
+                        <a href="#" class="footer-social-link" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+                        <a href="#" class="footer-social-link" aria-label="Instagram"><i
+                                class="bi bi-instagram"></i></a>
+                        <a href="#" class="footer-social-link" aria-label="GitHub"><i class="bi bi-github"></i></a>
                     </div>
                 </div>
             </div>
@@ -113,6 +159,177 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ═══════════ NAVBAR SCROLL EFFECT ═══════════ -->
+    <script>
+        (function () {
+            const nav = document.getElementById('mainNav');
+            if (!nav) return;
+
+            let lastScroll = 0;
+            const SCROLL_THRESHOLD = 60;
+
+            window.addEventListener('scroll', () => {
+                const currentScroll = window.scrollY;
+
+                // Add/remove scrolled class for background change
+                nav.classList.toggle('navbar-scrolled', currentScroll > SCROLL_THRESHOLD);
+
+                // Optional: hide on scroll down, show on scroll up (subtle)
+                if (currentScroll > lastScroll && currentScroll > 300) {
+                    nav.classList.add('navbar-hide');
+                } else {
+                    nav.classList.remove('navbar-hide');
+                }
+                lastScroll = currentScroll;
+            }, { passive: true });
+        })();
+    </script>
+
+    <!-- ═══════════ LIVE SEARCH ═══════════ -->
+    <script>
+        (function () {
+            const input = document.getElementById('liveSearch');
+            const dropdown = document.getElementById('searchResults');
+            const spinner = document.getElementById('searchSpinner');
+            const shortcut = document.querySelector('.search-shortcut');
+            if (!input || !dropdown) return;
+
+            let debounceTimer = null;
+
+            // Keyboard shortcut: Ctrl+K to focus search
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    input.focus();
+                    input.select();
+                }
+                // Escape to blur & close
+                if (e.key === 'Escape' && document.activeElement === input) {
+                    input.blur();
+                    dropdown.classList.add('d-none');
+                }
+            });
+
+            // Hide shortcut hint when focused
+            input.addEventListener('focus', () => {
+                if (shortcut) shortcut.classList.add('opacity-0');
+            });
+            input.addEventListener('blur', () => {
+                if (shortcut) shortcut.classList.remove('opacity-0');
+                // Delay hiding dropdown so click events can fire
+                setTimeout(() => dropdown.classList.add('d-none'), 200);
+            });
+
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                const query = input.value.trim();
+
+                if (query.length < 2) {
+                    dropdown.classList.add('d-none');
+                    return;
+                }
+
+                if (spinner) spinner.classList.remove('d-none');
+                if (shortcut) shortcut.classList.add('d-none');
+
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const res = await fetch(`{% url 'search_autocomplete' %}?q=${encodeURIComponent(query)}`);
+                        const data = await res.json();
+
+                        if (data.results && data.results.length > 0) {
+                            dropdown.innerHTML = data.results.map(movie => `
+                                <a href="/movie/${movie.id}/" class="search-result-item d-flex align-items-center gap-3">
+                                    <img src="${movie.poster_url || ''}" class="search-result-poster" alt="">
+                                    <div class="flex-grow-1 min-width-0">
+                                        <div class="text-white fw-semibold text-truncate">${movie.title}</div>
+                                        <div class="text-muted extra-small">${movie.year || ''} ${movie.genre ? '· ' + movie.genre : ''}</div>
+                                    </div>
+                                    ${movie.rating ? `<span class="search-result-rating"><i class="bi bi-star-fill me-1"></i>${movie.rating}</span>` : ''}
+                                </a>
+                            `).join('');
+                            dropdown.classList.remove('d-none');
+                        } else {
+                            dropdown.innerHTML = `
+                                <div class="search-no-result text-center py-4">
+                                    <i class="bi bi-film text-muted opacity-25 d-block mb-2 fs-4"></i>
+                                    <span class="text-muted small">No results found for "${query}"</span>
+                                </div>`;
+                            dropdown.classList.remove('d-none');
+                        }
+                    } catch (err) {
+                        console.error('Search error:', err);
+                    } finally {
+                        if (spinner) spinner.classList.add('d-none');
+                    }
+                }, 300);
+            });
+        })();
+    </script>
+
+    <!-- ═══════════ TOAST + IMAGE OBSERVER ═══════════ -->
+    <script>
+        // ── Global Toast Notification ──
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const icons = {
+                success: 'bi-check-circle-fill',
+                error: 'bi-exclamation-circle-fill',
+                info: 'bi-info-circle-fill',
+                warning: 'bi-exclamation-triangle-fill'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+            toast.innerHTML = `<i class="bi ${icons[type] || icons.info} me-2"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            // Trigger entrance animation
+            requestAnimationFrame(() => toast.classList.add('toast-show'));
+
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('toast-show');
+                toast.classList.add('toast-hide');
+                toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+            }, 3000);
+        }
+
+        // ── IntersectionObserver: Lazy fade-in for images ──
+        (function () {
+            if (!('IntersectionObserver' in window)) return;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('lazy-loaded');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { rootMargin: '50px 0px', threshold: 0.01 });
+
+            function observeImages() {
+                document.querySelectorAll('.poster-img, .cast-avatar, .search-result-poster').forEach(img => {
+                    if (!img.classList.contains('lazy-loaded')) {
+                        img.classList.add('lazy-img');
+                        observer.observe(img);
+                    }
+                });
+            }
+
+            // Run on DOM ready and also expose for dynamic content
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', observeImages);
+            } else {
+                observeImages();
+            }
+            window.observeLazyImages = observeImages;
+        })();
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 

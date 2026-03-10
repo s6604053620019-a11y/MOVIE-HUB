@@ -135,15 +135,33 @@ def movie_detail(request, tmdb_id):
             user_review = None
 
         if request.method == 'POST':
+            is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
             form = ReviewForm(request.POST, instance=user_review)
             if form.is_valid():
                 review = form.save(commit=False)
                 review.user = request.user
                 review.movie = movie
                 review.save()
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'is_edit': user_review is not None,
+                        'review': {
+                            'id': review.id,
+                            'username': review.user.username,
+                            'rating': review.rating,
+                            'text': review.text,
+                            'created_at': review.created_at.strftime('%d %b %Y'),
+                            'is_owner': True,
+                        },
+                        'avg_rating': movie.average_rating,
+                        'rating_count': movie.rating_count,
+                    })
                 messages.success(request, 'Your review has been saved!')
                 return redirect('movie_detail', tmdb_id=tmdb_id)
             else:
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': 'Please select a star rating.'}, status=400)
                 messages.error(request, 'Please select a star rating.')
         elif user_review:
             form = ReviewForm(instance=user_review)
@@ -189,6 +207,14 @@ def delete_review(request, review_id):
     review = get_object_or_404(Review, id=review_id, user=request.user)
     tmdb_id = review.movie.tmdb_id
     review.delete()
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    if is_ajax:
+        movie = Movie.objects.get(tmdb_id=tmdb_id)
+        return JsonResponse({
+            'success': True,
+            'avg_rating': movie.average_rating,
+            'rating_count': movie.rating_count,
+        })
     messages.success(request, 'Your review has been deleted.')
     return redirect('movie_detail', tmdb_id=tmdb_id)
 

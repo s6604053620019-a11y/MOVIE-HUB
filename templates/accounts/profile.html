@@ -62,7 +62,7 @@
                         <div class="movie-card position-relative shadow-pro">
                             <a href="{% url 'movie_detail' movie.tmdb_id %}">
                                 <img src="https://image.tmdb.org/t/p/w342{{ movie.poster_path }}" class="poster-img"
-                                    alt="{{ movie.title }}">
+                                    alt="{{ movie.title }}" loading="lazy">
                             </a>
                             <button onclick="removeFromList('{{ movie.tmdb_id }}', 'like')"
                                 class="btn-remove btn btn-glass rounded-circle p-1 position-absolute top-0 end-0 m-2 opacity-0 transition-fast"
@@ -87,7 +87,7 @@
                         <div class="movie-card position-relative shadow-pro">
                             <a href="{% url 'movie_detail' movie.tmdb_id %}">
                                 <img src="https://image.tmdb.org/t/p/w342{{ movie.poster_path }}" class="poster-img"
-                                    alt="{{ movie.title }}">
+                                    alt="{{ movie.title }}" loading="lazy">
                             </a>
                             <button onclick="removeFromList('{{ movie.tmdb_id }}', 'watchlist')"
                                 class="btn-remove btn btn-glass rounded-circle p-1 position-absolute top-0 end-0 m-2 opacity-0 transition-fast"
@@ -193,7 +193,7 @@
     document.querySelectorAll('input[type="file"]').forEach(el => el.classList.add('form-control'));
 
     async function removeFromList(tmdbId, type) {
-        const url = type === 'like' ? `/movies/${tmdbId}/like/` : `/movies/${tmdbId}/watchlist/`;
+        const url = type === 'like' ? `/movie/${tmdbId}/like/` : `/movie/${tmdbId}/watchlist/`;
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -212,8 +212,10 @@
                 element.style.transform = 'scale(0.8)';
                 setTimeout(() => element.remove(), 300);
             }
+            showToast(type === 'like' ? 'Removed from favorites' : 'Removed from watchlist', 'info');
         } catch (error) {
             console.error('Error removing item:', error);
+            showToast('Failed to remove. Please try again.', 'error');
         }
     }
 </script>
