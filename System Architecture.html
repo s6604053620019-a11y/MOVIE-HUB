@@ -1,265 +1,441 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineShare System Architecture Infographic</title>
+    <title>CineShare System Architecture</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
-        body {
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* ปิด Scrollbar บังคับให้อยู่ในจอเดียว */
             font-family: 'Prompt', sans-serif;
-            background-color: #0f172a;
+            background-color: var(--bg-color);
             color: #f8fafc;
             background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
         }
+
+        /* * ใช้ CSS Grid ในการแบ่งสัดส่วนหน้าจอแบบ 100vh 
+         * แบ่งเป็น 3 ส่วน: Header, Content Grid (flex column), Footer
+         */
+        #main-container {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            width: 100%;
+            height: 100vh;
+            padding: 1.5vh 3vw;
+            box-sizing: border-box;
+            gap: 1vh;
+        }
+
         .layer-card {
-            background: rgba(30, 41, 59, 0.7);
+            background: rgba(30, 41, 59, 0.85);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.3);
+            border-radius: 1.25rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+            /* ให้เนื้อหาด้านในกระจายตัวเท่าๆ กัน */
+            padding: 1.5vh 1vw;
         }
-        .layer-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
+
         .gradient-text {
             background: linear-gradient(to right, #38bdf8, #818cf8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .connector {
-            width: 2px;
-            height: 40px;
-            background: linear-gradient(to bottom, #38bdf8, #818cf8);
-            margin: 0 auto;
-            position: relative;
+
+        /* ลูกศรลง */
+        .arrow-down {
+            color: #38bdf8;
+            font-size: clamp(1.5rem, 3vh, 2.2rem);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 1.5vh;
+            opacity: 1;
+            margin: 0;
+            filter: drop-shadow(0 2px 5px rgba(56, 189, 248, 0.7));
+            animation: bounce-arrow 1.5s infinite ease-in-out;
+            z-index: 20;
         }
-        .connector::after {
-            content: '';
+
+        @keyframes bounce-arrow {
+
+            0%,
+            100% {
+                transform: translateY(-20%) scale(1);
+            }
+
+            50% {
+                transform: translateY(20%) scale(1.15);
+                filter: drop-shadow(0 4px 10px rgba(56, 189, 248, 1));
+            }
+        }
+
+        /* ลูกศรเชื่อมไป Cloud APIs (แนวนอน) */
+        .arrow-side {
             position: absolute;
-            bottom: 0;
-            left: -4px;
-            width: 10px;
-            height: 10px;
-            border-right: 2px solid #818cf8;
-            border-bottom: 2px solid #818cf8;
-            transform: rotate(45deg);
+            top: 50%;
+            left: calc(66.66% + 0.35rem);
+            /* ตำแหน่งรอยต่อระหว่าง grid-cols-2 และ grid-cols-1 */
+            transform: translate(-50%, -50%);
+            color: #f472b6;
+            /* สีชมพู (pink-400) เข้ากับ Cloud APIs */
+            font-size: clamp(1.5rem, 3.5vh, 2.5rem);
+            filter: drop-shadow(0 2px 5px rgba(244, 114, 182, 0.7));
+            animation: bounce-side 1.5s infinite ease-in-out;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes bounce-side {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) translateX(-20%) scale(1);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) translateX(20%) scale(1.15);
+                filter: drop-shadow(0 4px 10px rgba(244, 114, 182, 1));
+            }
+        }
+
+        /* ป้ายชื่อ Layer */
+        .layer-badge {
+            position: absolute;
+            top: -0.7rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: clamp(0.6rem, 1.2vh, 0.8rem);
+            font-weight: 700;
+            padding: 0.15rem 0.8rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        /* Responsive Text Sizing */
+        .responsive-h1 {
+            font-size: clamp(1.2rem, 3.5vh, 2.5rem);
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .responsive-h2 {
+            font-size: clamp(1rem, 2.2vh, 1.5rem);
+            font-weight: 700;
+            margin-bottom: 0.5vh;
+            text-align: center;
+        }
+
+        .responsive-h3 {
+            font-size: clamp(0.8rem, 1.8vh, 1.2rem);
+            font-weight: 700;
+            margin-bottom: 0.2vh;
+        }
+
+        .responsive-p {
+            font-size: clamp(0.65rem, 1.3vh, 0.95rem);
+            color: #cbd5e1;
+            margin: 0;
+        }
+
+        .responsive-icon {
+            font-size: clamp(1.2rem, 3vh, 2.2rem);
+            margin-bottom: 0.5vh;
+        }
+
+        /* กล่องย่อยด้านใน */
+        .inner-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            padding: 1vh 1vw;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+        }
+
+        .inner-box:hover {
+            transform: translateY(-2px);
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        .content-grid {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 0.5vh;
+        }
+
+        .flex-row-center {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 1vw;
+            padding-left: 10%;
+            flex-direction: row;
+            text-align: left;
         }
     </style>
 </head>
-<body class="antialiased min-h-screen pb-12">
 
-    <!-- Header Section -->
-    <header class="text-center py-12 px-4">
-        <div class="inline-block p-3 rounded-full bg-blue-500/10 mb-4 text-blue-400">
-            <i class="fa-solid fa-film text-3xl"></i>
-        </div>
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">CineShare <span class="gradient-text">Architecture</span></h1>
-        <p class="text-slate-400 max-w-2xl mx-auto text-lg">
-            ภาพรวมสถาปัตยกรรมระบบของโปรเจกต์ (N-Tier Architecture & API-Driven)
-        </p>
-    </header>
+<body>
 
-    <!-- Main Infographic Container -->
-    <div class="max-w-5xl mx-auto px-4 relative">
+    <div id="main-container">
 
-        <!-- 1. Client Layer -->
-        <div class="layer-card rounded-2xl p-6 md:p-8 text-center relative z-10 border-t-4 border-t-sky-400">
-            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-sky-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Layer 1: Presentation
+        <!-- Header -->
+        <header class="text-center flex flex-col justify-center items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-film text-blue-400 responsive-icon" style="margin:0;"></i>
+                <h1 class="responsive-h1">CineShare <span class="gradient-text">Architecture</span></h1>
             </div>
-            <h2 class="text-2xl font-semibold mb-6 flex items-center justify-center gap-3">
-                <i class="fa-solid fa-mobile-screen text-sky-400"></i>
-                Client Layer
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-slate-800/50 p-4 rounded-xl">
-                    <i class="fa-brands fa-html5 text-orange-500 text-3xl mb-2"></i>
-                    <h3 class="font-medium">HTML5 & CSS3</h3>
-                    <p class="text-sm text-slate-400 mt-1">โครงสร้างและรูปแบบ</p>
-                </div>
-                <div class="bg-slate-800/50 p-4 rounded-xl">
-                    <i class="fa-brands fa-bootstrap text-purple-500 text-3xl mb-2"></i>
-                    <h3 class="font-medium">Bootstrap 5</h3>
-                    <p class="text-sm text-slate-400 mt-1">Responsive UI Design</p>
-                </div>
-                <div class="bg-slate-800/50 p-4 rounded-xl">
-                    <i class="fa-brands fa-js text-yellow-400 text-3xl mb-2"></i>
-                    <h3 class="font-medium">Vanilla JS / AJAX</h3>
-                    <p class="text-sm text-slate-400 mt-1">Dynamic Interaction</p>
-                </div>
-            </div>
-        </div>
+            <p class="text-slate-400 text-xs md:text-sm mt-1">ภาพรวมสถาปัตยกรรมระบบ (N-Tier Architecture & API-Driven)
+            </p>
+        </header>
 
-        <div class="connector"></div>
+        <!-- Main Layers (Flex Column to share height) -->
+        <div class="content-grid">
 
-        <!-- 2. Network & Edge Layer -->
-        <div class="layer-card rounded-2xl p-6 md:p-8 text-center relative z-10 border-t-4 border-t-indigo-400">
-            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Layer 2: Network
-            </div>
-            <h2 class="text-2xl font-semibold mb-6 flex items-center justify-center gap-3">
-                <i class="fa-solid fa-network-wired text-indigo-400"></i>
-                Edge & Delivery
-            </h2>
-            <div class="flex flex-col md:flex-row justify-center gap-6">
-                <div class="bg-slate-800/50 p-4 rounded-xl flex-1 flex items-center justify-center gap-4">
-                    <i class="fa-solid fa-server text-indigo-400 text-3xl"></i>
-                    <div class="text-left">
-                        <h3 class="font-medium">Cloud Load Balancer</h3>
-                        <p class="text-sm text-slate-400">HTTPS / SSL Termination</p>
-                    </div>
-                </div>
-                <div class="bg-slate-800/50 p-4 rounded-xl flex-1 flex items-center justify-center gap-4">
-                    <i class="fa-solid fa-bolt text-yellow-400 text-3xl"></i>
-                    <div class="text-left">
-                        <h3 class="font-medium">WhiteNoise CDN</h3>
-                        <p class="text-sm text-slate-400">Static Files Server (CSS/JS)</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="connector"></div>
-
-        <!-- Middle Section: Backend + External APIs -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
-            
-            <!-- 3. Application Layer (Takes 2 columns) -->
-            <div class="lg:col-span-2 layer-card rounded-2xl p-6 md:p-8 border-t-4 border-t-emerald-400">
-                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                    Layer 3: Application
-                </div>
-                <h2 class="text-2xl font-semibold mb-6 flex items-center justify-center gap-3 text-center">
-                    <i class="fa-brands fa-python text-emerald-400"></i>
-                    Django Backend
+            <!-- 1. Client Layer (10%) -->
+            <div class="layer-card border-t-4 border-sky-400" style="flex: 1.2;">
+                <div class="layer-badge bg-sky-500">Layer 1: Presentation</div>
+                <h2 class="responsive-h2 text-sky-100 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-mobile-screen text-sky-400"></i> Client Layer
                 </h2>
-                
-                <div class="bg-slate-900/50 p-3 rounded-lg text-center mb-4 border border-slate-700">
-                    <span class="font-mono text-emerald-400">Gunicorn (WSGI HTTP Server)</span>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <!-- Apps -->
-                    <div class="bg-slate-800/80 p-5 rounded-xl border border-slate-700">
-                        <h3 class="text-emerald-400 font-medium mb-3 border-b border-slate-700 pb-2"><i class="fa-solid fa-users mr-2"></i>Accounts App</h3>
-                        <ul class="text-sm text-slate-300 space-y-2">
-                            <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>User Authentication</li>
-                            <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Profile Management</li>
-                            <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Avatar Uploads</li>
-                        </ul>
+                <div class="grid grid-cols-3 gap-3 h-full px-4">
+                    <div class="inner-box">
+                        <i class="fa-brands fa-html5 text-orange-500 responsive-icon"></i>
+                        <h3 class="responsive-h3 text-white">HTML5 & CSS3</h3>
+                        <p class="responsive-p">โครงสร้างหน้าเว็บ</p>
                     </div>
-                    
-                    <div class="bg-slate-800/80 p-5 rounded-xl border border-slate-700">
-                        <h3 class="text-emerald-400 font-medium mb-3 border-b border-slate-700 pb-2"><i class="fa-solid fa-film mr-2"></i>Movies App</h3>
-                        <ul class="text-sm text-slate-300 space-y-2">
-                            <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Movie Browsing/Search</li>
-                            <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Watchlist & Likes</li>
-                            <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Reviews & Ratings</li>
-                        </ul>
+                    <div class="inner-box">
+                        <i class="fa-brands fa-bootstrap text-purple-500 responsive-icon"></i>
+                        <h3 class="responsive-h3 text-white">Bootstrap 5</h3>
+                        <p class="responsive-p">Responsive UI</p>
                     </div>
-                </div>
-
-                <!-- Services & ORM -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-blue-900/30 p-3 rounded-lg text-center border border-blue-800/50">
-                        <h4 class="text-blue-300 font-medium text-sm"><i class="fa-solid fa-code-branch mr-2"></i>Services Layer (API Wrappers)</h4>
-                    </div>
-                    <div class="bg-emerald-900/30 p-3 rounded-lg text-center border border-emerald-800/50">
-                        <h4 class="text-emerald-300 font-medium text-sm"><i class="fa-solid fa-database mr-2"></i>Django ORM</h4>
+                    <div class="inner-box">
+                        <i class="fa-brands fa-js text-yellow-400 responsive-icon"></i>
+                        <h3 class="responsive-h3 text-white">Vanilla JS</h3>
+                        <p class="responsive-p">Dynamic (AJAX)</p>
                     </div>
                 </div>
             </div>
 
-            <!-- External APIs (Takes 1 column) -->
-            <div class="layer-card rounded-2xl p-6 border-t-4 border-t-pink-400 flex flex-col justify-center relative">
-                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                    External
-                </div>
-                <h2 class="text-xl font-semibold mb-6 flex items-center justify-center gap-3 text-center">
-                    <i class="fa-solid fa-cloud text-pink-400"></i>
-                    Cloud APIs
+            <div class="arrow-down"><i class="fa-solid fa-angles-down"></i></div>
+
+            <!-- 2. Network Layer (10%) -->
+            <div class="layer-card border-t-4 border-indigo-400" style="flex: 1.2;">
+                <div class="layer-badge bg-indigo-500">Layer 2: Network</div>
+                <h2 class="responsive-h2 text-indigo-100 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-network-wired text-indigo-400"></i> Edge & Delivery
                 </h2>
-                
-                <div class="space-y-4">
-                    <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 hover:border-pink-500/50 transition-colors">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div class="w-8 h-8 rounded bg-blue-500/20 flex items-center justify-center text-blue-400">
-                                <i class="fa-solid fa-database"></i>
-                            </div>
-                            <h3 class="font-medium">TMDB REST API</h3>
+                <div class="grid grid-cols-2 gap-4 h-full px-8">
+                    <div class="inner-box flex-row-center">
+                        <i class="fa-solid fa-server text-indigo-400 responsive-icon" style="margin:0;"></i>
+                        <div>
+                            <h3 class="responsive-h3 text-white">Cloud Load Balancer</h3>
+                            <p class="responsive-p">HTTPS / SSL Termination</p>
                         </div>
-                        <p class="text-xs text-slate-400">ดึงข้อมูล Metadata หนัง (ชื่อ, เรื่องย่อ, เรทติ้ง) แบบ Real-time</p>
                     </div>
-
-                    <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 hover:border-pink-500/50 transition-colors">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div class="w-8 h-8 rounded bg-green-500/20 flex items-center justify-center text-green-400">
-                                <i class="fa-regular fa-image"></i>
-                            </div>
-                            <h3 class="font-medium">TMDB Image CDN</h3>
+                    <div class="inner-box flex-row-center">
+                        <i class="fa-solid fa-bolt text-yellow-400 responsive-icon" style="margin:0;"></i>
+                        <div>
+                            <h3 class="responsive-h3 text-white">WhiteNoise CDN</h3>
+                            <p class="responsive-p">Static Server (CSS/JS)</p>
                         </div>
-                        <p class="text-xs text-slate-400">โหลดภาพโปสเตอร์และภาพพื้นหลังตรงจากเซิร์ฟเวอร์ TMDB</p>
                     </div>
+                </div>
+            </div>
 
-                    <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 hover:border-pink-500/50 transition-colors">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div class="w-8 h-8 rounded bg-red-500/20 flex items-center justify-center text-red-500">
-                                <i class="fa-brands fa-youtube"></i>
-                            </div>
-                            <h3 class="font-medium">YouTube Embed</h3>
+            <div class="arrow-down"><i class="fa-solid fa-angles-down"></i></div>
+
+            <!-- 3. Application & APIs (Takes more space - 50%) -->
+            <div class="grid grid-cols-3 gap-3 relative" style="flex: 3;">
+
+                <!-- ลูกศรแนวนอนชี้ไปมาระหว่าง Backend และ Cloud APIs -->
+                <div class="arrow-side"><i class="fa-solid fa-angles-right"></i></div>
+
+                <!-- Django Backend -->
+                <div class="col-span-2 layer-card border-t-4 border-emerald-400 h-full">
+                    <div class="layer-badge bg-emerald-500">Layer 3: Application</div>
+                    <h2 class="responsive-h2 text-emerald-100 flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-python text-emerald-400"></i> Django Backend
+                    </h2>
+
+                    <div class="flex flex-col gap-2 h-full justify-between">
+                        <div class="bg-slate-900/80 rounded-md py-1 text-center border border-slate-700 shadow-inner">
+                            <span class="font-mono font-bold text-emerald-400"
+                                style="font-size: clamp(0.7rem, 1.8vh, 1rem);">Gunicorn (WSGI Server)</span>
                         </div>
-                        <p class="text-xs text-slate-400">เล่นตัวอย่างหนัง (Trailers) ผ่าน iFrame ช่วยประหยัดแบนด์วิธ</p>
+
+                        <div class="grid grid-cols-2 gap-3 flex-grow">
+                            <!-- Accounts App -->
+                            <div class="inner-box" style="justify-content: flex-start; padding: 1.5vh 1vw;">
+                                <h3 class="responsive-h3 text-emerald-400 mb-1 border-b border-slate-700 pb-1 w-full"><i
+                                        class="fa-solid fa-users mr-2"></i>Accounts App</h3>
+                                <ul class="text-left w-full space-y-1 responsive-p"
+                                    style="color: white; list-style: none; padding-left: 0.5vw;">
+                                    <li><i class="fa-solid fa-check text-emerald-500 mr-1 text-[0.8em]"></i>
+                                        Authentication</li>
+                                    <li><i class="fa-solid fa-check text-emerald-500 mr-1 text-[0.8em]"></i> Profiles &
+                                        Avatars</li>
+                                </ul>
+                            </div>
+                            <!-- Movies App -->
+                            <div class="inner-box" style="justify-content: flex-start; padding: 1.5vh 1vw;">
+                                <h3 class="responsive-h3 text-emerald-400 mb-1 border-b border-slate-700 pb-1 w-full"><i
+                                        class="fa-solid fa-film mr-2"></i>Movies App</h3>
+                                <ul class="text-left w-full space-y-1 responsive-p"
+                                    style="color: white; list-style: none; padding-left: 0.5vw;">
+                                    <li><i class="fa-solid fa-check text-emerald-500 mr-1 text-[0.8em]"></i> Browsing &
+                                        Search</li>
+                                    <li><i class="fa-solid fa-check text-emerald-500 mr-1 text-[0.8em]"></i> Watchlists
+                                        & Reviews</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-blue-900/40 rounded py-1 text-center border border-blue-800/50">
+                                <span class="responsive-p font-bold text-blue-300">Services Layer (API Wrappers)</span>
+                            </div>
+                            <div class="bg-emerald-900/40 rounded py-1 text-center border border-emerald-800/50">
+                                <span class="responsive-p font-bold text-emerald-300">Django ORM</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Connectors for external APIs -->
-                <svg class="absolute hidden lg:block -left-8 top-1/2 w-8 h-12 text-pink-400 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                </svg>
+                <!-- External APIs -->
+                <div class="col-span-1 layer-card border-t-4 border-pink-400 h-full">
+                    <div class="layer-badge bg-pink-500">External</div>
+                    <h2 class="responsive-h2 text-pink-100 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cloud text-pink-400"></i> Cloud APIs
+                    </h2>
+                    <div class="flex flex-col gap-2 justify-center h-full">
+                        <div class="inner-box flex-row-center" style="padding-left: 1vw;">
+                            <i class="fa-solid fa-database text-blue-400 responsive-icon" style="margin:0;"></i>
+                            <div>
+                                <h3 class="responsive-h3 text-white">TMDB API</h3>
+                                <p class="text-[0.6rem] lg:text-[0.7rem] text-slate-400">ข้อมูล Metadata หนัง</p>
+                            </div>
+                        </div>
+                        <div class="inner-box flex-row-center" style="padding-left: 1vw;">
+                            <i class="fa-regular fa-image text-green-400 responsive-icon" style="margin:0;"></i>
+                            <div>
+                                <h3 class="responsive-h3 text-white">TMDB CDN</h3>
+                                <p class="text-[0.6rem] lg:text-[0.7rem] text-slate-400">โหลดภาพโปสเตอร์</p>
+                            </div>
+                        </div>
+                        <div class="inner-box flex-row-center" style="padding-left: 1vw;">
+                            <i class="fa-brands fa-youtube text-red-500 responsive-icon" style="margin:0;"></i>
+                            <div>
+                                <h3 class="responsive-h3 text-white">YouTube</h3>
+                                <p class="text-[0.6rem] lg:text-[0.7rem] text-slate-400">เล่นตัวอย่างหนัง</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <div class="arrow-down"><i class="fa-solid fa-angles-down"></i></div>
+
+            <!-- 4. Data Layer (20%) -->
+            <div class="layer-card border-t-4 border-amber-400" style="flex: 1.5;">
+                <div class="layer-badge bg-amber-500">Layer 4: Storage</div>
+                <h2 class="responsive-h2 text-amber-100 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-hard-drive text-amber-400"></i> Data Storage Layer
+                </h2>
+
+                <div class="grid grid-cols-2 gap-4 h-full px-8 pb-1">
+
+                    <!-- Relational DB Box -->
+                    <div class="inner-box" style="justify-content: center; padding: 1vh 2vw;">
+                        <div class="flex items-center gap-3 mb-1">
+                            <i class="fa-solid fa-database text-blue-400"
+                                style="font-size: clamp(1.5rem, 4vh, 2.5rem);"></i>
+                            <h3 class="text-white font-bold" style="font-size: clamp(0.9rem, 2vh, 1.4rem); margin: 0;">
+                                Relational DB</h3>
+                        </div>
+                        <p class="text-slate-300 font-medium mb-2"
+                            style="font-size: clamp(0.7rem, 1.5vh, 1rem); margin: 0.2vh 0;">
+                            PostgreSQL (Prod) / SQLite (Dev)
+                        </p>
+                        <!-- ข้อมูลที่เก็บ -->
+                        <div class="flex flex-wrap justify-center gap-1 mt-1">
+                            <span
+                                class="bg-blue-900/40 border border-blue-800/50 text-blue-300 px-2 py-0.5 rounded text-[0.6rem] lg:text-[0.75rem]">Users
+                                Data</span>
+                            <span
+                                class="bg-blue-900/40 border border-blue-800/50 text-blue-300 px-2 py-0.5 rounded text-[0.6rem] lg:text-[0.75rem]">Reviews</span>
+                            <span
+                                class="bg-blue-900/40 border border-blue-800/50 text-blue-300 px-2 py-0.5 rounded text-[0.6rem] lg:text-[0.75rem]">Watchlists</span>
+                        </div>
+                    </div>
+
+                    <!-- Media Storage Box -->
+                    <div class="inner-box" style="justify-content: center; padding: 1vh 2vw;">
+                        <div class="flex items-center gap-3 mb-1">
+                            <i class="fa-regular fa-folder-open text-amber-400"
+                                style="font-size: clamp(1.5rem, 4vh, 2.5rem);"></i>
+                            <h3 class="text-white font-bold" style="font-size: clamp(0.9rem, 2vh, 1.4rem); margin: 0;">
+                                Media Storage</h3>
+                        </div>
+                        <p class="text-slate-300 font-medium mb-2"
+                            style="font-size: clamp(0.7rem, 1.5vh, 1rem); margin: 0.2vh 0;">
+                            Local Disk / Cloud Object Storage (S3)
+                        </p>
+                        <!-- ข้อมูลที่เก็บ -->
+                        <div class="flex flex-wrap justify-center gap-1 mt-1">
+                            <span
+                                class="bg-amber-900/40 border border-amber-800/50 text-amber-300 px-2 py-0.5 rounded text-[0.6rem] lg:text-[0.75rem]">User
+                                Avatars</span>
+                            <span
+                                class="bg-amber-900/40 border border-amber-800/50 text-amber-300 px-2 py-0.5 rounded text-[0.6rem] lg:text-[0.75rem]">/media/
+                                directory</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="connector"></div>
+        <!-- Footer -->
+        <footer class="text-center text-slate-500 text-xs flex items-end justify-center pb-1">
+            <p><i class="fa-solid fa-circle-info mr-1 text-sky-400"></i> โครงสร้างถูกออกแบบด้วย N-Tier Architecture
+                แยกส่วนรับผิดชอบ (Separation of Concerns) อย่างชัดเจน</p>
+        </footer>
 
-        <!-- 4. Data Layer -->
-        <div class="layer-card rounded-2xl p-6 md:p-8 text-center relative z-10 border-t-4 border-t-amber-400">
-            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Layer 4: Storage
-            </div>
-            <h2 class="text-2xl font-semibold mb-6 flex items-center justify-center gap-3">
-                <i class="fa-solid fa-hard-drive text-amber-400"></i>
-                Data Storage Layer
-            </h2>
-            <div class="flex flex-col md:flex-row justify-center gap-6">
-                <div class="bg-slate-800/50 p-5 rounded-xl flex-1 flex flex-col items-center justify-center gap-3 border border-slate-700">
-                    <i class="fa-solid fa-database text-blue-400 text-4xl"></i>
-                    <h3 class="font-medium text-lg">Relational Database</h3>
-                    <p class="text-sm text-slate-400">PostgreSQL (Prod) / SQLite (Dev)</p>
-                    <div class="text-xs text-slate-500 mt-2 bg-slate-900 px-3 py-1 rounded-full">
-                        Users, Reviews, Watchlists
-                    </div>
-                </div>
-                <div class="bg-slate-800/50 p-5 rounded-xl flex-1 flex flex-col items-center justify-center gap-3 border border-slate-700">
-                    <i class="fa-regular fa-folder-open text-amber-400 text-4xl"></i>
-                    <h3 class="font-medium text-lg">Media Storage</h3>
-                    <p class="text-sm text-slate-400">Local Disk / Cloud S3</p>
-                    <div class="text-xs text-slate-500 mt-2 bg-slate-900 px-3 py-1 rounded-full">
-                        User Profile Avatars (/media/)
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Footer note -->
-    <div class="text-center mt-12 text-slate-500 text-sm">
-        <p><i class="fa-solid fa-circle-info mr-1"></i> โครงสร้างนี้ออกแบบตามหลักการ Separation of Concerns ช่วยให้บำรุงรักษาและสเกลระบบได้ง่ายในอนาคต</p>
     </div>
 
 </body>
+
 </html>

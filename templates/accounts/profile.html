@@ -26,9 +26,9 @@
         <div>
             <h1 class="h3 fw-black text-white mb-0">{{ user.username }}</h1>
             {% if profile.bio %}
-            <p class="text-muted small mb-1 mt-1">{{ profile.bio }}</p>
+            <p class="text-white small mb-1 mt-1" style="opacity: 0.9; font-weight: 400;">{{ profile.bio }}</p>
             {% endif %}
-            <p class="text-muted extra-small mb-0">
+            <p class="text-white extra-small mb-0" style="opacity: 0.7;">
                 <i class="bi bi-calendar3 me-1"></i>Member since {{ user.date_joined|date:"F Y" }}
             </p>
         </div>
@@ -38,23 +38,23 @@
     <div class="d-flex gap-4 mb-4 flex-wrap">
         <div class="text-center">
             <div class="h4 fw-black text-white mb-0">{{ profile.films_count }}</div>
-            <div class="text-muted extra-small fw-bold tracking-wider">FILMS</div>
+            <div class="text-white extra-small fw-bold tracking-wider" style="opacity: 0.85;">FILMS</div>
         </div>
         <div class="text-center">
             <div class="h4 fw-black text-white mb-0">{{ profile.reviews_count }}</div>
-            <div class="text-muted extra-small fw-bold tracking-wider">REVIEWS</div>
+            <div class="text-white extra-small fw-bold tracking-wider" style="opacity: 0.85;">REVIEWS</div>
         </div>
         <div class="text-center">
             <div class="h4 fw-black text-white mb-0">{{ profile.watchlist_count }}</div>
-            <div class="text-muted extra-small fw-bold tracking-wider">WATCHLIST</div>
+            <div class="text-white extra-small fw-bold tracking-wider" style="opacity: 0.85;">WATCHLIST</div>
         </div>
         <div class="text-center">
             <div class="h4 fw-black text-white mb-0">{{ profile.followers_count }}</div>
-            <div class="text-muted extra-small fw-bold tracking-wider">FOLLOWERS</div>
+            <div class="text-white extra-small fw-bold tracking-wider" style="opacity: 0.85;">FOLLOWERS</div>
         </div>
         <div class="text-center">
             <div class="h4 fw-black text-white mb-0">{{ profile.following_count }}</div>
-            <div class="text-muted extra-small fw-bold tracking-wider">FOLLOWING</div>
+            <div class="text-white extra-small fw-bold tracking-wider" style="opacity: 0.85;">FOLLOWING</div>
         </div>
     </div>
 
@@ -103,7 +103,7 @@
                 </div>
                 {% else %}
                 <div class="text-center py-3 glass-card rounded-3 border border-subtle">
-                    <p class="text-muted mb-0 small">No favorites yet. Like films to add them here.</p>
+                    <p class="text-white mb-0 small" style="opacity: 0.7;">No favorites yet. Like films to add them here.</p>
                 </div>
                 {% endif %}
             </div>
@@ -132,7 +132,7 @@
                 </div>
                 {% else %}
                 <div class="text-center py-3 glass-card rounded-3 border border-subtle">
-                    <p class="text-muted mb-0 small">Your watchlist is empty.</p>
+                    <p class="text-white mb-0 small" style="opacity: 0.7;">Your watchlist is empty.</p>
                 </div>
                 {% endif %}
             </div>
@@ -160,11 +160,11 @@
                     {{ review.text }}
                 </p>
                 {% endif %}
-                <div class="text-muted extra-small">{{ review.created_at|date:"d M Y" }}</div>
+                <div class="text-white extra-small" style="opacity: 0.75; font-weight: 500;">{{ review.created_at|date:"d M Y" }}</div>
             </div>
             {% empty %}
             <div class="text-center py-3 glass-card rounded-3 border border-subtle">
-                <p class="text-muted mb-0 small">No diary entries yet.</p>
+                <p class="text-white mb-0 small" style="opacity: 0.7;">No diary entries yet.</p>
             </div>
             {% endfor %}
         </div>
