@@ -14,64 +14,81 @@
 </head>
 
 <body>
-    <!-- ═══════════ NAVBAR ═══════════ -->
+    <!-- ═══════════ LETTERBOXD-STYLE NAVBAR ═══════════ -->
     <nav class="navbar navbar-expand-lg sticky-top navbar-cineshare" id="mainNav">
         <div class="container">
             <!-- Brand -->
             <a class="navbar-brand brand-logo d-flex align-items-center" href="{% url 'home' %}">
-                <div class="brand-dots me-3">
+                <div class="brand-dots me-2">
                     <span class="dot" style="background-color: var(--brand-green);"></span>
-                    <span class="dot" style="background-color: var(--brand-orange);"></span>
                     <span class="dot" style="background-color: var(--brand-blue);"></span>
+                    <span class="dot" style="background-color: var(--brand-orange);"></span>
                 </div>
-                <span class="hover-glow">CineShare</span>
+                <span>CineShare</span>
             </a>
 
             <!-- Mobile Toggle -->
             <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
                 aria-label="Toggle navigation">
-                <i class="bi bi-list text-white fs-2"></i>
+                <i class="bi bi-list text-white fs-4"></i>
             </button>
 
             <!-- Collapsible Content -->
             <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Search Bar (Center) -->
-                <div class="search-container mx-auto my-3 my-lg-0 px-lg-4">
+                <!-- Nav Links (Letterboxd style) -->
+                <ul class="navbar-nav me-auto ms-3 gap-0">
+                    <li class="nav-item">
+                        <a class="nav-link nav-lb-link" href="{% url 'home' %}">Films</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-lb-link" href="{% url 'members' %}">Members</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link nav-lb-link" href="{% url 'activity_feed' %}">Activity</a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <!-- Search (compact, right side) -->
+                <div class="search-container my-2 my-lg-0 me-3">
                     <div class="position-relative">
-                        <i
-                            class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted search-icon"></i>
-                        <input class="form-control search-box ps-5 pe-5" type="search" id="liveSearch"
-                            placeholder="Search for films, actors..." autocomplete="off">
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"
+                            style="font-size: 0.75rem;"></i>
+                        <input class="form-control search-box" type="search" id="liveSearch"
+                            placeholder="Search films..." autocomplete="off">
                         <kbd
-                            class="search-shortcut d-none d-lg-inline-flex position-absolute top-50 end-0 translate-middle-y me-3">Ctrl
-                            K</kbd>
+                            class="search-shortcut d-none d-lg-inline-flex position-absolute top-50 end-0 translate-middle-y me-2">
+                            /</kbd>
                         <div id="searchResults" class="search-results-dropdown shadow-lg d-none"></div>
-                        <!-- Loading spinner -->
-                        <div class="search-spinner d-none position-absolute top-50 end-0 translate-middle-y me-3"
+                        <div class="search-spinner d-none position-absolute top-50 end-0 translate-middle-y me-2"
                             id="searchSpinner">
-                            <div class="spinner-border spinner-border-sm text-muted" role="status">
+                            <div class="spinner-border spinner-border-sm text-muted" role="status"
+                                style="width:14px;height:14px;">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Nav Items (Right) -->
+                <!-- User / Auth -->
                 <ul class="navbar-nav align-items-center gap-2">
                     {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle nav-user-btn px-3 py-2 d-flex align-items-center gap-2"
-                            href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle nav-user-btn d-flex align-items-center gap-2" href="#"
+                            id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="nav-avatar">
                                 <i class="bi bi-person-fill"></i>
                             </div>
                             <span class="nav-username">{{ user.username }}</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-0 shadow-lg mt-3 dropdown-custom"
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-0 shadow-lg mt-2 dropdown-custom"
                             aria-labelledby="userDropdown">
                             <li><a class="dropdown-item py-2" href="{% url 'profile' %}"><i
                                         class="bi bi-person me-2"></i> Profile</a></li>
+                            <li><a class="dropdown-item py-2" href="{% url 'activity_feed' %}"><i
+                                        class="bi bi-rss me-2"></i> Activity</a></li>
                             <li>
                                 <hr class="dropdown-divider opacity-10">
                             </li>
@@ -86,11 +103,10 @@
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link fw-semibold px-3 text-white-50 hover-bright" href="{% url 'login' %}">Sign
-                            In</a>
+                        <a class="nav-link nav-lb-link" href="{% url 'login' %}">Sign In</a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn btn-brand" href="{% url 'signup' %}">Get Started</a>
+                        <a class="btn btn-brand btn-sm px-3" href="{% url 'signup' %}">Create Account</a>
                     </li>
                     {% endif %}
                 </ul>
@@ -105,7 +121,7 @@
             {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-pro animate-up"
                 role="alert"
-                style="background: var(--bg-card); color: var(--text-bright); border-left: 4px solid var(--brand-green);">
+                style="background: var(--bg-card); color: var(--text-bright); border-left: 3px solid var(--brand-green); border-radius: 4px;">
                 {{ message }}
                 <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="alert"
                     aria-label="Close"></button>
@@ -120,34 +136,34 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- ═══════════ FOOTER ═══════════ -->
-    <footer class="site-footer py-5 mt-5">
+    <footer class="site-footer py-4 mt-5">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-md-4 text-center text-md-start mb-4 mb-md-0">
-                    <a class="d-inline-flex align-items-center text-decoration-none mb-2" href="{% url 'home' %}">
+                <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
+                    <a class="d-inline-flex align-items-center text-decoration-none mb-1" href="{% url 'home' %}">
                         <div class="brand-dots me-2">
                             <span class="dot"
-                                style="background-color: var(--brand-green); width:7px; height:7px;"></span>
+                                style="background-color: var(--brand-green); width:6px; height:6px;"></span>
                             <span class="dot"
-                                style="background-color: var(--brand-orange); width:7px; height:7px;"></span>
+                                style="background-color: var(--brand-blue); width:6px; height:6px;"></span>
                             <span class="dot"
-                                style="background-color: var(--brand-blue); width:7px; height:7px;"></span>
+                                style="background-color: var(--brand-orange); width:6px; height:6px;"></span>
                         </div>
-                        <span class="text-white fw-bold">CineShare</span>
+                        <span class="text-white fw-bold" style="font-size:0.9rem;">CineShare</span>
                     </a>
-                    <p class="text-muted small mb-0">&copy; 2024 CineShare. Powered by cinematic passion.</p>
+                    <p class="text-muted small mb-0">&copy; 2026 CineShare. Powered by TMDB.</p>
                 </div>
-                <div class="col-md-4 text-center mb-4 mb-md-0">
+                <div class="col-md-4 text-center mb-3 mb-md-0">
                     <div class="d-flex justify-content-center gap-3 text-muted">
                         <a href="#" class="footer-link">Privacy</a>
-                        <span class="opacity-25">•</span>
+                        <span class="opacity-25">·</span>
                         <a href="#" class="footer-link">Terms</a>
-                        <span class="opacity-25">•</span>
+                        <span class="opacity-25">·</span>
                         <a href="#" class="footer-link">Contact</a>
                     </div>
                 </div>
                 <div class="col-md-4 text-center text-md-end">
-                    <div class="d-flex justify-content-center justify-content-md-end gap-3">
+                    <div class="d-flex justify-content-center justify-content-md-end gap-2">
                         <a href="#" class="footer-social-link" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
                         <a href="#" class="footer-social-link" aria-label="Instagram"><i
                                 class="bi bi-instagram"></i></a>
@@ -167,15 +183,12 @@
             if (!nav) return;
 
             let lastScroll = 0;
-            const SCROLL_THRESHOLD = 60;
+            const SCROLL_THRESHOLD = 50;
 
             window.addEventListener('scroll', () => {
                 const currentScroll = window.scrollY;
-
-                // Add/remove scrolled class for background change
                 nav.classList.toggle('navbar-scrolled', currentScroll > SCROLL_THRESHOLD);
 
-                // Optional: hide on scroll down, show on scroll up (subtle)
                 if (currentScroll > lastScroll && currentScroll > 300) {
                     nav.classList.add('navbar-hide');
                 } else {
@@ -197,27 +210,28 @@
 
             let debounceTimer = null;
 
-            // Keyboard shortcut: Ctrl+K to focus search
             document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    input.focus();
+                    input.select();
+                }
                 if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                     e.preventDefault();
                     input.focus();
                     input.select();
                 }
-                // Escape to blur & close
                 if (e.key === 'Escape' && document.activeElement === input) {
                     input.blur();
                     dropdown.classList.add('d-none');
                 }
             });
 
-            // Hide shortcut hint when focused
             input.addEventListener('focus', () => {
                 if (shortcut) shortcut.classList.add('opacity-0');
             });
             input.addEventListener('blur', () => {
                 if (shortcut) shortcut.classList.remove('opacity-0');
-                // Delay hiding dropdown so click events can fire
                 setTimeout(() => dropdown.classList.add('d-none'), 200);
             });
 
@@ -243,8 +257,8 @@
                                 <a href="/movie/${movie.id}/" class="search-result-item d-flex align-items-center gap-3">
                                     <img src="${movie.poster_url || ''}" class="search-result-poster" alt="">
                                     <div class="flex-grow-1 min-width-0">
-                                        <div class="text-white fw-semibold text-truncate">${movie.title}</div>
-                                        <div class="text-muted extra-small">${movie.year || ''} ${movie.genre ? '· ' + movie.genre : ''}</div>
+                                        <div class="text-white fw-semibold text-truncate" style="font-size:0.85rem;">${movie.title}</div>
+                                        <div class="text-muted extra-small">${movie.year || ''}</div>
                                     </div>
                                     ${movie.rating ? `<span class="search-result-rating"><i class="bi bi-star-fill me-1"></i>${movie.rating}</span>` : ''}
                                 </a>
@@ -252,9 +266,8 @@
                             dropdown.classList.remove('d-none');
                         } else {
                             dropdown.innerHTML = `
-                                <div class="search-no-result text-center py-4">
-                                    <i class="bi bi-film text-muted opacity-25 d-block mb-2 fs-4"></i>
-                                    <span class="text-muted small">No results found for "${query}"</span>
+                                <div class="search-no-result text-center py-3">
+                                    <span class="text-muted small">No results for "${query}"</span>
                                 </div>`;
                             dropdown.classList.remove('d-none');
                         }
@@ -270,7 +283,6 @@
 
     <!-- ═══════════ TOAST + IMAGE OBSERVER ═══════════ -->
     <script>
-        // ── Global Toast Notification ──
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             if (!container) return;
@@ -287,10 +299,8 @@
             toast.innerHTML = `<i class="bi ${icons[type] || icons.info} me-2"></i><span>${message}</span>`;
             container.appendChild(toast);
 
-            // Trigger entrance animation
             requestAnimationFrame(() => toast.classList.add('toast-show'));
 
-            // Auto-dismiss after 3 seconds
             setTimeout(() => {
                 toast.classList.remove('toast-show');
                 toast.classList.add('toast-hide');
@@ -298,7 +308,7 @@
             }, 3000);
         }
 
-        // ── IntersectionObserver: Lazy fade-in for images ──
+        // Lazy fade-in for images
         (function () {
             if (!('IntersectionObserver' in window)) return;
 
@@ -320,7 +330,6 @@
                 });
             }
 
-            // Run on DOM ready and also expose for dynamic content
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', observeImages);
             } else {

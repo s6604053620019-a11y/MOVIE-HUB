@@ -102,11 +102,16 @@
                             <div class="display-4 fw-black text-white mb-0 lh-1">{{ db_movie.average_rating }}</div>
                             <div class="text-brand-green fs-5 mt-1 d-flex gap-1 justify-content-end">
                                 {% with avg=db_movie.average_rating %}
-                                <i class="bi bi-star{% if avg >= 1 %}-fill{% elif avg >= 0.5 %}-half{% endif %}"></i>
-                                <i class="bi bi-star{% if avg >= 2 %}-fill{% elif avg >= 1.5 %}-half{% endif %}"></i>
-                                <i class="bi bi-star{% if avg >= 3 %}-fill{% elif avg >= 2.5 %}-half{% endif %}"></i>
-                                <i class="bi bi-star{% if avg >= 4 %}-fill{% elif avg >= 3.5 %}-half{% endif %}"></i>
-                                <i class="bi bi-star{% if avg >= 5 %}-fill{% elif avg >= 4.5 %}-half{% endif %}"></i>
+                                <i class="bi bi-star{% if avg >= 1 %}-fill{% elif avg >= 0.5 %}-half{% endif %}"
+                                    style="color:#ee7000;"></i>
+                                <i class="bi bi-star{% if avg >= 2 %}-fill{% elif avg >= 1.5 %}-half{% endif %}"
+                                    style="color:#ee7000;"></i>
+                                <i class="bi bi-star{% if avg >= 3 %}-fill{% elif avg >= 2.5 %}-half{% endif %}"
+                                    style="color:#ee7000;"></i>
+                                <i class="bi bi-star{% if avg >= 4 %}-fill{% elif avg >= 3.5 %}-half{% endif %}"
+                                    style="color:#ee7000;"></i>
+                                <i class="bi bi-star{% if avg >= 5 %}-fill{% elif avg >= 4.5 %}-half{% endif %}"
+                                    style="color:#ee7000;"></i>
                                 {% endwith %}
                             </div>
                         </div>
@@ -257,7 +262,9 @@
                                     </div>
                                     <div>
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            <span class="text-white fw-bold">{{ review.user.username }}</span>
+                                            <a href="{% url 'public_profile' review.user.username %}"
+                                                class="text-white fw-bold text-decoration-none hover-glow">{{
+                                                review.user.username }}</a>
                                             {% if review.user == request.user %}
                                             <span class="badge-you">YOU</span>
                                             {% endif %}
@@ -347,7 +354,7 @@
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(180deg, rgba(8, 10, 12, 0.7) 0%, rgba(8, 10, 12, 0.4) 40%, var(--bg-main) 90%);
+        background: linear-gradient(180deg, rgba(20, 24, 28, 0.7) 0%, rgba(20, 24, 28, 0.4) 40%, var(--bg-main) 90%);
     }
 
     .bg-card-glass {
@@ -389,7 +396,7 @@
         font-size: 0.8rem;
         letter-spacing: 1px;
         transition: var(--transition-fast);
-        border-radius: 12px;
+        border-radius: 6px;
     }
 
     .btn-detail-action:hover {
@@ -442,8 +449,8 @@
     }
 
     .form-control {
-        background: rgba(8, 10, 12, 0.6) !important;
-        border-radius: 12px !important;
+        background: rgba(20, 24, 28, 0.6) !important;
+        border-radius: 6px !important;
     }
 
     /* --- Star Picker --- */
@@ -461,7 +468,7 @@
     .star-btn:hover,
     .star-btn.hovered,
     .star-btn.selected {
-        color: var(--brand-green);
+        color: #ee7000;
     }
 
     .star-btn:hover {
@@ -590,8 +597,8 @@
 
     /* Rating badge (top-right corner of card) */
     .review-rating-badge {
-        background: linear-gradient(135deg, rgba(0, 224, 84, 0.15) 0%, rgba(0, 224, 84, 0.05) 100%);
-        border: 1px solid rgba(0, 224, 84, 0.25);
+        background: linear-gradient(135deg, rgba(238, 112, 0, 0.15) 0%, rgba(238, 112, 0, 0.05) 100%);
+        border: 1px solid rgba(238, 112, 0, 0.25);
         border-radius: 12px;
         padding: 6px 14px;
         text-align: center;
@@ -601,20 +608,20 @@
     .review-rating-badge .rating-num {
         font-size: 1.4rem;
         font-weight: 800;
-        color: var(--brand-green);
+        color: #ee7000;
         line-height: 1;
     }
 
     .review-rating-badge .rating-denom {
         font-size: 0.7rem;
-        color: rgba(0, 224, 84, 0.5);
+        color: rgba(238, 112, 0, 0.5);
         font-weight: 600;
         margin-left: 1px;
     }
 
     /* Star icons inside review */
     .review-star-filled {
-        color: var(--brand-green);
+        color: #ee7000;
         font-size: 0.8rem;
     }
 

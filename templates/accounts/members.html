@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Members - CineShare{% endblock %}
+
+{% block content %}
+<div class="container py-4 mt-lg-3">
+    <h1 class="section-title mb-4">Members</h1>
+
+    <div class="row g-3">
+        {% for item in members %}
+        <div class="col-md-6 col-lg-4">
+            <div class="glass-card rounded-3 border border-subtle p-4 h-100 member-card">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {% if item.profile.avatar %}
+                    <img src="{{ item.profile.avatar.url }}" class="rounded-circle"
+                        style="width: 50px; height: 50px; object-fit: cover; border: 2px solid var(--border-highlight);">
+                    {% else %}
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                        style="width: 50px; height: 50px; background: var(--bg-card); border: 2px solid var(--border-highlight); color: var(--text-bright); font-size: 1.2rem;">
+                        {{ item.profile.user.username|slice:":1"|upper }}
+                    </div>
+                    {% endif %}
+
+                    <div class="flex-grow-1 min-width-0">
+                        <a href="{% url 'public_profile' item.profile.user.username %}"
+                            class="text-white fw-bold text-decoration-none hover-glow d-block text-truncate">
+                            {{ item.profile.user.username }}
+                        </a>
+                        <div class="text-muted extra-small">
+                            {{ item.profile.films_count }} films · {{ item.profile.reviews_count }} reviews
+                        </div>
+                    </div>
+
+                    {% if user.is_authenticated and user != item.profile.user %}
+                    <button
+                        class="btn {% if item.is_following %}btn-glass{% else %}btn-brand{% endif %} btn-sm px-3 flex-shrink-0 follow-btn"
+                        data-username="{{ item.profile.user.username }}" onclick="toggleMemberFollow(this)">
+                        {% if item.is_following %}Following{% else %}Follow{% endif %}
+                    </button>
+                    {% endif %}
+                </div>
+
+                {% if item.profile.bio %}
+                <p class="text-muted small mb-0"
+                    style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                    {{ item.profile.bio }}
+                </p>
+                {% endif %}
+
+                <div class="d-flex gap-3 mt-3 text-muted extra-small">
+                    <span><strong class="text-white">{{ item.profile.followers_count }}</strong> followers</span>
+                    <span><strong class="text-white">{{ item.profile.following_count }}</strong> following</span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-people display-3 text-muted opacity-25 d-block mb-3"></i>
+            <h5 class="text-white-50">No members yet</h5>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .member-card {
+        transition: var(--transition-fast);
+    }
+
+    .member-card:hover {
+        border-color: var(--brand-green) !important;
+        transform: translateY(-2px);
+    }
+</style>
+
+{% block extra_js %}
+<script>
+    async function toggleMemberFollow(btn) {
+        const username = btn.dataset.username;
+        btn.disabled = true;
+        try {
+            const resp = await fetch(`/accounts/user/${username}/follow/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await resp.json();
+
+            if (data.following) {
+                btn.className = 'btn btn-glass btn-sm px-3 flex-shrink-0 follow-btn';
+                btn.textContent = 'Following';
+                showToast(`Following ${username}`, 'success');
+            } else {
+                btn.className = 'btn btn-brand btn-sm px-3 flex-shrink-0 follow-btn';
+                btn.textContent = 'Follow';
+                showToast(`Unfollowed ${username}`, 'info');
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('Something went wrong', 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %}

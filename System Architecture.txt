@@ -1,0 +1,66 @@
+graph TD
+    %% --- สไตล์ของกล่องต่างๆ (Professional Theme) ---
+    classDef client fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
+    classDef edge fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef backend fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef db fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef external fill:#eceff1,stroke:#455a64,stroke-width:2px,color:#000
+
+    %% --- 1. Client Layer ---
+    subgraph ClientLayer ["📱 Presentation Layer (Client)"]
+        Browser["Web Browser<br/>(HTML5, Bootstrap 5, Vanilla JS)"]:::client
+    end
+
+    %% --- 2. Edge / Network Layer ---
+    subgraph EdgeLayer ["🌐 Network & Edge Layer"]
+        LB["Cloud Load Balancer<br/>(HTTPS / SSL Termination)"]:::edge
+        CDN["Static Files Server<br/>(WhiteNoise / Cloud CDN)"]:::edge
+    end
+
+    %% --- 3. Application Layer (Django) ---
+    subgraph AppLayer ["⚙️ Application Layer (Django Backend)"]
+        WSGI["Gunicorn<br/>(WSGI HTTP Server)"]:::backend
+        Router["Django URL Dispatcher"]:::backend
+        
+        subgraph Apps ["Django Applications (Business Logic)"]
+            Accounts["Accounts App<br/>(Auth, User Profile)"]:::backend
+            Movies["Movies App<br/>(Views, Likes, Watchlist)"]:::backend
+        end
+        
+        Services["Services Layer<br/>(movies/services.py)"]:::backend
+        ORM["Django ORM<br/>(Data Abstraction)"]:::backend
+    end
+
+    %% --- 4. Data Layer ---
+    subgraph DataLayer ["🗄️ Data Storage Layer"]
+        DB[("Relational Database<br/>(PostgreSQL / SQLite)")]:::db
+        Media[("Media Storage<br/>(User Avatars / S3)")]:::db
+    end
+
+    %% --- 5. External Services ---
+    subgraph ExternalServices ["☁️ External Cloud APIs (Third-Party)"]
+        TMDB_API["TMDB REST API<br/>(Movie Metadata)"]:::external
+        TMDB_CDN["TMDB Image CDN<br/>(Posters & Backdrops)"]:::external
+        YouTube["YouTube Player<br/>(Embedded Trailers)"]:::external
+    end
+
+    %% --- การเชื่อมต่อและทิศทางของข้อมูล (Data Flow) ---
+    Browser <-->|HTTP/HTTPS Requests| LB
+    Browser -.->|Load CSS/JS| CDN
+    Browser -.->|Direct Image Load| TMDB_CDN
+    Browser -.->|iFrame Streaming| YouTube
+
+    LB <-->|Proxy Pass| WSGI
+    WSGI <--> Router
+    Router <--> Accounts
+    Router <--> Movies
+    
+    Movies <-->|Delegate API Calls| Services
+    Services <-->|REST / JSON| TMDB_API
+    
+    Accounts <-->|Query/Mutate| ORM
+    Movies <-->|Query/Mutate| ORM
+    
+    ORM <-->|SQL Queries| DB
+    Accounts -->|Upload Avatars| Media
+    Browser -.->|Fetch Avatars| Media

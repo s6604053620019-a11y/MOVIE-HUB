@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Activity Feed - CineShare{% endblock %}
+
+{% block content %}
+<div class="container py-4 mt-lg-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h1 class="section-title mb-0">Activity Feed</h1>
+                <span class="text-muted small">Following {{ following_count }} member{{ following_count|pluralize
+                    }}</span>
+            </div>
+
+            {% if reviews %}
+            <div class="activity-list">
+                {% for review in reviews %}
+                <div class="activity-card glass-card rounded-3 mb-3 p-0 overflow-hidden border border-subtle">
+                    <div class="d-flex">
+                        <!-- Poster -->
+                        <a href="{% url 'movie_detail' review.movie.tmdb_id %}" class="flex-shrink-0">
+                            <img src="https://image.tmdb.org/t/p/w154{{ review.movie.poster_path }}"
+                                class="activity-poster" alt="{{ review.movie.title }}" loading="lazy"
+                                style="width: 80px; height: 120px; object-fit: cover;">
+                        </a>
+
+                        <!-- Content -->
+                        <div class="flex-grow-1 p-3 min-width-0">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <a href="{% url 'public_profile' review.user.username %}"
+                                    class="d-flex align-items-center gap-2 text-decoration-none">
+                                    <div class="avatar-initial avatar-sm"
+                                        style="width: 28px; height: 28px; font-size: 0.7rem; border-radius: 50%;">
+                                        {{ review.user.username|slice:":1"|upper }}
+                                    </div>
+                                    <span class="text-white fw-bold small">{{ review.user.username }}</span>
+                                </a>
+                                <span class="text-muted extra-small">reviewed</span>
+                            </div>
+
+                            <a href="{% url 'movie_detail' review.movie.tmdb_id %}"
+                                class="text-white text-decoration-none fw-bold d-block mb-1 hover-glow">
+                                {{ review.movie.title }}
+                            </a>
+
+                            <!-- Stars -->
+                            <div class="d-flex gap-0 mb-2">
+                                {% for i in "12345"|make_list %}
+                                <i
+                                    class="bi bi-star{% if review.rating >= forloop.counter %}-fill{% endif %} activity-star"></i>
+                                {% endfor %}
+                            </div>
+
+                            {% if review.text %}
+                            <p class="text-white-50 small mb-1 lh-base"
+                                style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ review.text }}
+                            </p>
+                            {% endif %}
+
+                            <div class="text-muted extra-small mt-1">
+                                <i class="bi bi-clock opacity-50 me-1"></i>{{ review.created_at|timesince }} ago
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% else %}
+            <div class="text-center py-5 glass-card rounded-4 border border-subtle">
+                {% if following_count == 0 %}
+                <i class="bi bi-people display-3 text-muted opacity-25 d-block mb-3"></i>
+                <h5 class="text-white-50 mb-2">Your feed is empty</h5>
+                <p class="text-muted small mb-4">Follow other members to see their reviews here.</p>
+                <a href="{% url 'members' %}" class="btn btn-brand">Discover Members</a>
+                {% else %}
+                <i class="bi bi-chat-square-text display-3 text-muted opacity-25 d-block mb-3"></i>
+                <h5 class="text-white-50 mb-2">No recent activity</h5>
+                <p class="text-muted small">The people you follow haven't posted any reviews yet.</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .activity-star {
+        color: #ee7000;
+        font-size: 0.75rem;
+    }
+
+    .activity-card {
+        transition: var(--transition-fast);
+    }
+
+    .activity-card:hover {
+        border-color: var(--brand-green) !important;
+        transform: translateX(3px);
+    }
+
+    .avatar-sm {
+        background: var(--brand-blue-glass);
+        color: var(--brand-blue);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
